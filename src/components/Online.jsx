@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase, onlineError } from '../supabase'
 
-export default function Account({ session }) {
+export default function Account({ session, onPlayerReady }) {
+  const [guest, setGuest] = useState(true)
   const [signup, setSignup] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
@@ -9,39 +10,56 @@ export default function Account({ session }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   async function submit(event) {
-    event.preventDefault(); setBusy(true); setNotice('')
+    event.preventDefault()
+    if (busy) return
+    setBusy(true); setNotice('')
     try {
+      const playerName = name.trim()
+      if ((session || guest || signup) && (playerName.length < 2 || playerName.length > 30)) {
+        setNotice('နာမည်ကို ၂ လုံးမှ ၃၀ လုံးအတွင်း ထည့်ပါ။'); return
+      }
       if (session) {
-        const { error } = await supabase.rpc('set_player_name', { player_name: name.trim() })
+        const { error } = await supabase.rpc('set_player_name', { player_name: playerName })
         if (error) throw error
-        const { error: metadataError } = await supabase.auth.updateUser({ data: { display_name: name.trim() } })
+        const { error: metadataError } = await supabase.auth.updateUser({ data: { display_name: playerName } })
         if (metadataError) throw metadataError
         setNotice('နာမည် သိမ်းပြီးပါပြီ။')
       } else {
-        const result = signup
-          ? await supabase.auth.signUp({ email, password, options: { data: { display_name: name.trim() }, emailRedirectTo: window.location.origin } })
-          : await supabase.auth.signInWithPassword({ email, password })
+        const result = guest
+          ? await supabase.auth.signInAnonymously({ options: { data: { display_name: playerName } } })
+          : signup
+            ? await supabase.auth.signUp({ email, password, options: { data: { display_name: playerName }, emailRedirectTo: window.location.origin } })
+            : await supabase.auth.signInWithPassword({ email, password })
         if (result.error) throw result.error
         setPassword('')
-        setNotice(signup && !result.data.session ? 'Email ထဲက အတည်ပြု link ကို နှိပ်ပြီး ဝင်ပါ။' : 'ဝင်ရောက်ပြီးပါပြီ။')
+        if (result.data.session) {
+          if (guest) {
+            const { error } = await supabase.rpc('set_player_name', { player_name: playerName })
+            if (error) throw error
+          }
+          onPlayerReady(result.data.user.id)
+        } else setNotice('Email ထဲက အတည်ပြု link ကို နှိပ်ပြီး ဝင်ပါ။')
       }
     } catch (error) { setNotice(onlineError(error)) }
     finally { setBusy(false) }
   }
   async function logout() {
     setBusy(true)
-    const { error } = await supabase.auth.signOut()
-    setNotice(error ? onlineError(error) : 'ထွက်ပြီးပါပြီ။')
-    setBusy(false)
+    try {
+      const { error } = await supabase.auth.signOut()
+      setNotice(error ? onlineError(error) : 'ထွက်ပြီးပါပြီ။')
+    } catch (error) { setNotice(onlineError(error)) }
+    finally { setBusy(false) }
   }
   return <div className="account-content">
-    <p>Account မဝင်ဘဲလည်း ကစားနိုင်ပါတယ်။ ဝင်ထားရင် ပွဲအသစ်ကနေစပြီး အနိုင်ရလဒ်တွေကို leaderboard မှာ သိမ်းပေးပါမယ်။</p>
+    <p>{session ? 'နာမည်ကို ပြောင်းသိမ်းနိုင်ပါတယ်။ နိုင်ပွဲနဲ့ အကောင်းဆုံး streak ကို mode အလိုက် leaderboard မှာ သိမ်းပေးပါမယ်။' : guest ? 'နာမည်တစ်ခုပဲ ထည့်ပြီး စကစားပါ။ Email နဲ့ password မလိုပါဘူး။ သင့်နိုင်ပွဲတွေကို leaderboard မှာ သိမ်းပေးပါမယ်။' : 'Account နဲ့ ဝင်ပြီး စက်မတူလည်း သင့်ရလဒ်တွေကို ဆက်သုံးနိုင်ပါတယ်။'}</p>
+    {!session && guest && <p className="ranking-note">ဒီ browser မှာ ကစားသူကို မှတ်ထားပါမယ်။ နာမည်တစ်ခုတည်းနဲ့ အခြားစက်ကနေ အကောင့်ပြန်ဝင်လို့ မရပါဘူး။</p>}
     <form onSubmit={submit}>
-      {(session || signup) && <label>ကစားသူနာမည်<input value={name} onChange={e => setName(e.target.value)} minLength={2} maxLength={30} required autoComplete="nickname" /></label>}
-      {!session && <><label>Email<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label><label>Password<input type="password" minLength={8} required autoComplete={signup ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} /></label></>}
-      <button className="next-game" disabled={busy}>{busy ? 'ခဏစောင့်ပါ…' : session ? 'နာမည် သိမ်းမယ်' : signup ? 'Account ဖန်တီးမယ်' : 'ဝင်မယ်'}</button>
+      {(session || signup || guest) && <label>ကစားသူနာမည်<input value={name} onChange={e => setName(e.target.value)} minLength={2} maxLength={30} required autoComplete="nickname" disabled={busy} /></label>}
+      {!session && !guest && <><label>Email<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} disabled={busy} /></label><label>Password<input type="password" minLength={8} required autoComplete={signup ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} disabled={busy} /></label></>}
+      <button className="next-game" disabled={busy}>{busy ? 'ခဏစောင့်ပါ…' : session ? 'နာမည် သိမ်းမယ်' : guest ? 'နာမည်နဲ့ စကစားမယ်' : signup ? 'Account ဖန်တီးမယ်' : 'ဝင်မယ်'}</button>
     </form>
-    {session ? <button className="text-button" disabled={busy} onClick={logout}>Account မှ ထွက်မယ်</button> : <button className="text-button" disabled={busy} onClick={() => { setSignup(!signup); setNotice('') }}>{signup ? 'Account ရှိပြီးသား — ဝင်မယ်' : 'Account အသစ် ဖန်တီးမယ်'}</button>}
+    {session ? <button className="text-button" disabled={busy} onClick={logout}>ကစားသူအဖြစ်မှ ထွက်မယ်</button> : <><button className="text-button" disabled={busy} onClick={() => { setGuest(!guest); setSignup(false); setNotice('') }}>{guest ? 'Email account နဲ့ ဝင်မယ်' : 'နာမည်တစ်ခုပဲ ထည့်ကစားမယ်'}</button>{!guest && <button className="text-button" disabled={busy} onClick={() => { setSignup(!signup); setNotice('') }}>{signup ? 'Account ရှိပြီးသား — ဝင်မယ်' : 'Account အသစ် ဖန်တီးမယ်'}</button>}</>}
     <p role="status">{notice}</p>
   </div>
 }

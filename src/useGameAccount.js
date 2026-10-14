@@ -33,7 +33,7 @@ export default function useGameAccount() {
     }).catch(error => { if (active) setCloudMessage(onlineError(error)) })
     return () => { active = false }
   }, [queue, playerId, retry])
-  const startOnlineRound = () => { round.current = { id: crypto.randomUUID(), userId: playerId || null } }
+  const startOnlineRound = (userId = playerId) => { round.current = { id: crypto.randomUUID(), userId: userId || null } }
   const saveOnlineResult = useCallback((mode, won) => {
     if (!round.current.userId) return
     const result = { ...round.current, mode, won }

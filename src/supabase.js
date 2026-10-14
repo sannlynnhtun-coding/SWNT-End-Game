@@ -14,6 +14,7 @@ async function timedFetch(input, options = {}) {
 }
 export const supabase = createClient(url, key, { global: { fetch: timedFetch } })
 export function onlineError(error) {
+  if (error?.code === 'anonymous_provider_disabled' || /anonymous.*disabled/i.test(error?.message || '')) return 'နာမည်နဲ့ ကစားရန် Server ပြင်ဆင်နေဆဲပါ။ Email account နဲ့ ဝင်နိုင်ပါတယ်။'
   if (/fetch|network|connection|abort/i.test(error?.message || '')) return 'Server ကို ချိတ်မရသေးပါ။ Internet ပြန်စစ်ပြီး ထပ်စမ်းပါ။'
   if (['42P01', 'PGRST202', 'PGRST205'].includes(error?.code)) return 'Leaderboard ကို ပြင်ဆင်နေဆဲပါ။ ခဏနေ ပြန်စမ်းပါ။'
   if (/invalid login/i.test(error?.message || '')) return 'Email သို့မဟုတ် password မမှန်ပါ။'

@@ -127,12 +127,12 @@ export default function AssemblyEndgame() {
     setStats({ ...stats, [statsKey]: { streak, best: Math.max(current.best, streak), wins: current.wins + (won ? 1 : 0) } })
   }, [over, won, stats, statsKey, saveOnlineResult])
 
-  function newGame(nextCategory = category, nextDifficulty = difficulty, nextMode = mode, nextPlay = proverbPlay) {
+  function newGame(nextCategory = category, nextDifficulty = difficulty, nextMode = mode, nextPlay = proverbPlay, onlinePlayerId) {
     const nextStatsKey = nextMode === 'proverb' ? `proverb-${nextPlay}` : nextMode === 'slang' ? 'slang' : nextDifficulty
     if (nextStatsKey !== statsKey) {
       setStats(previous => ({ ...previous, [nextStatsKey]: { ...previous[nextStatsKey], streak: 0 } }))
     }
-    startOnlineRound(); setPanel(null)
+    startOnlineRound(onlinePlayerId); setPanel(null)
     setCategory(nextCategory); setDifficulty(nextDifficulty); setMode(nextMode); setProverbPlay(nextPlay)
     setRound(nextMode === 'proverb' ? drawProverb(history, puzzle.word) : nextMode === 'slang' ? drawSlang(history, puzzle.word) : drawPuzzle(nextCategory, nextDifficulty, history, puzzle.word))
     setGuessed([]); setAnswer(''); setWrongAnswers([]); setSlangSolved(false); composing.current = false
@@ -177,7 +177,7 @@ export default function AssemblyEndgame() {
     <header className="topbar">
       <a className="brand" href="./"><span className="brand-mark">A_</span><span>ASSEMBLY<span className="brand-sub">ENDGAME / WORD RESCUE</span></span></a>
       <nav className="game-nav" aria-label="Game navigation">
-        <button onClick={() => setPanel('settings')}>Settings</button><button onClick={() => setPanel('leaderboard')}>Leaderboard</button><button onClick={() => setPanel('account')}>{session ? 'Account' : 'Login'}</button>
+        <button onClick={() => setPanel('settings')}>Settings</button><button onClick={() => setPanel('leaderboard')}>Leaderboard</button><button onClick={() => setPanel('account')}>{session ? 'ကစားသူ' : 'နာမည်ထည့်မယ်'}</button>
       </nav>
     </header>
     <section className={`game-board ${isMyanmar ? 'myanmar-board' : 'english-board'}`} aria-label="Word rescue game">
@@ -201,7 +201,7 @@ export default function AssemblyEndgame() {
       <p>မှားခွင့် ၈ ကြိမ်ရှိပါတယ်။ Hint အခမဲ့ တစ်ကြိမ်ယူနိုင်ပါတယ်။ အချိန်ကန့်သတ်ချက် မရှိပါ။</p>
       <button className="next-game" onClick={() => setPanel(null)}>ဆက်ကစားမယ်</button>
     </Panel>}
-    {panel === 'account' && <Panel title={session ? 'သင့် Account' : 'Login / Register'} onClose={() => setPanel(null)}><Account session={session}/></Panel>}
+    {panel === 'account' && <Panel title={session ? 'သင့်ကစားသူနာမည်' : 'နာမည်ထည့်ပြီး စကစားပါ'} onClose={() => setPanel(null)}><Account session={session} onPlayerReady={userId => newGame(category, difficulty, mode, proverbPlay, userId)}/></Panel>}
     {panel === 'leaderboard' && <Panel title="Leaderboard" onClose={() => setPanel(null)}><Leaderboard initialMode={statsKey} userId={session?.user.id}/></Panel>}
     {panel === 'meaning' && <Panel title="အဖြေနဲ့ အဓိပ္ပာယ်" onClose={() => setPanel(null)}><h3>{puzzle.word}</h3><p>{puzzle.meaning}</p><button className="next-game" onClick={() => newGame()}>နောက်တစ်ပွဲ ကစားမယ် →</button></Panel>}
     {won && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && <ReactConfetti recycle={false} numberOfPieces={80} style={{position:'fixed',pointerEvents:'none'}}/>}

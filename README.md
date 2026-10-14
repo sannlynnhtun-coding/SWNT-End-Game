@@ -17,7 +17,7 @@ The game fits one viewport, including the result and next-round action. Settings
 
 ## Accounts and leaderboard
 
-Supabase email/password accounts are optional; guests can play immediately. Signed-in players' new rounds are saved with retry-safe UUIDs. Rankings are separated by English difficulty, slang, and the two proverb play modes.
+Players can join the leaderboard with just a nickname using Supabase anonymous Auth. Email/password accounts are optional; unregistered guests can still play immediately. Signed-in players' new rounds are saved with retry-safe UUIDs. Rankings are separated by English difficulty, slang, and the two proverb play modes.
 
 Run the database migration and configure Auth as described in [Supabase setup](supabase/README.md). The supplied publishable browser key cannot create database tables or change Auth settings.
 
