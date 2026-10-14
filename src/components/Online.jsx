@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase, onlineError } from '../supabase'
 
-export default function Account({ session, onPlayerReady }) {
+export default function Account({ session, onPlayerReady, confirmGoogleName = false }) {
   const [guest, setGuest] = useState(true)
   const [signup, setSignup] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
-  const [name, setName] = useState(session?.user.user_metadata?.display_name || '')
+  const [name, setName] = useState(session?.user.user_metadata?.display_name || session?.user.user_metadata?.full_name || session?.user.user_metadata?.name || '')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   async function submit(event) {
@@ -23,7 +23,8 @@ export default function Account({ session, onPlayerReady }) {
         if (error) throw error
         const { error: metadataError } = await supabase.auth.updateUser({ data: { display_name: playerName } })
         if (metadataError) throw metadataError
-        setNotice('နာမည် သိမ်းပြီးပါပြီ။')
+        if (confirmGoogleName) onPlayerReady(session.user.id)
+        else setNotice('နာမည် သိမ်းပြီးပါပြီ။')
       } else {
         const result = guest
           ? await supabase.auth.signInAnonymously({ options: { data: { display_name: playerName } } })
@@ -43,6 +44,17 @@ export default function Account({ session, onPlayerReady }) {
     } catch (error) { setNotice(onlineError(error)) }
     finally { setBusy(false) }
   }
+  async function googleLogin() {
+    if (busy) return
+    setBusy(true); setNotice('')
+    try {
+      const credentials = { provider: 'google', options: { redirectTo: window.location.origin + '/?login=google', scopes: 'openid email profile' } }
+      const { error } = session?.user.is_anonymous
+        ? await supabase.auth.linkIdentity(credentials)
+        : await supabase.auth.signInWithOAuth(credentials)
+      if (error) throw error
+    } catch (error) { setNotice(onlineError(error)); setBusy(false) }
+  }
   async function logout() {
     setBusy(true)
     try {
@@ -54,12 +66,15 @@ export default function Account({ session, onPlayerReady }) {
   return <div className="account-content">
     <p>{session ? 'နာမည်ကို ပြောင်းသိမ်းနိုင်ပါတယ်။ နိုင်ပွဲနဲ့ အကောင်းဆုံး streak ကို mode အလိုက် leaderboard မှာ သိမ်းပေးပါမယ်။' : guest ? 'နာမည်တစ်ခုပဲ ထည့်ပြီး စကစားပါ။ Email နဲ့ password မလိုပါဘူး။ သင့်နိုင်ပွဲတွေကို leaderboard မှာ သိမ်းပေးပါမယ်။' : 'Account နဲ့ ဝင်ပြီး စက်မတူလည်း သင့်ရလဒ်တွေကို ဆက်သုံးနိုင်ပါတယ်။'}</p>
     {!session && guest && <p className="ranking-note">ဒီ browser မှာ ကစားသူကို မှတ်ထားပါမယ်။ နာမည်တစ်ခုတည်းနဲ့ အခြားစက်ကနေ အကောင့်ပြန်ဝင်လို့ မရပါဘူး။</p>}
+    {(!session || session.user.is_anonymous) && <><button type="button" className="google-login" onClick={googleLogin} disabled={busy}>Continue with Google</button><p className="auth-divider">သို့မဟုတ်</p></>}
+    {confirmGoogleName && <p>Leaderboard မှာ ပြမယ့်နာမည်ကို အတည်ပြုပြီး ပွဲအသစ်စပါ။</p>}
     <form onSubmit={submit}>
       {(session || signup || guest) && <label>ကစားသူနာမည်<input value={name} onChange={e => setName(e.target.value)} minLength={2} maxLength={30} required autoComplete="nickname" disabled={busy} /></label>}
       {!session && !guest && <><label>Email<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} disabled={busy} /></label><label>Password<input type="password" minLength={8} required autoComplete={signup ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} disabled={busy} /></label></>}
-      <button className="next-game" disabled={busy}>{busy ? 'ခဏစောင့်ပါ…' : session ? 'နာမည် သိမ်းမယ်' : guest ? 'နာမည်နဲ့ စကစားမယ်' : signup ? 'Account ဖန်တီးမယ်' : 'ဝင်မယ်'}</button>
+      <button className="next-game" disabled={busy}>{busy ? 'ခဏစောင့်ပါ…' : session ? confirmGoogleName ? 'နာမည်နဲ့ စကစားမယ်' : 'နာမည် သိမ်းမယ်' : guest ? 'နာမည်နဲ့ စကစားမယ်' : signup ? 'Account ဖန်တီးမယ်' : 'ဝင်မယ်'}</button>
     </form>
     {session ? <button className="text-button" disabled={busy} onClick={logout}>ကစားသူအဖြစ်မှ ထွက်မယ်</button> : <><button className="text-button" disabled={busy} onClick={() => { setGuest(!guest); setSignup(false); setNotice('') }}>{guest ? 'Email account နဲ့ ဝင်မယ်' : 'နာမည်တစ်ခုပဲ ထည့်ကစားမယ်'}</button>{!guest && <button className="text-button" disabled={busy} onClick={() => { setSignup(!signup); setNotice('') }}>{signup ? 'Account ရှိပြီးသား — ဝင်မယ်' : 'Account အသစ် ဖန်တီးမယ်'}</button>}</>}
+    <p className="auth-policy">ဝင်ရောက်ခြင်းဖြင့် <a href="/terms.html" target="_blank" rel="noreferrer">Terms</a> ကို သဘောတူပြီး <a href="/privacy.html" target="_blank" rel="noreferrer">Privacy Policy</a> ကို ဖတ်ရှုနိုင်ပါတယ်။</p>
     <p role="status">{notice}</p>
   </div>
 }

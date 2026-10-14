@@ -24,8 +24,18 @@ function readStats() {
   }))
 }
 export default function AssemblyEndgame() {
+  const [googleSetup, setGoogleSetup] = useState(false)
   const [panel, setPanel] = useState(null)
   const { session, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud, pendingCloud } = useGameAccount()
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (session && url.searchParams.get('login') === 'google') {
+      setGoogleSetup(true); setPanel('account')
+      url.searchParams.delete('login')
+      window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+    }
+  }, [session])
+
   const [mode, setMode] = useState('english')
   const isSlang = mode === 'slang'
   const isProverb = mode === 'proverb'
@@ -132,7 +142,7 @@ export default function AssemblyEndgame() {
     if (nextStatsKey !== statsKey) {
       setStats(previous => ({ ...previous, [nextStatsKey]: { ...previous[nextStatsKey], streak: 0 } }))
     }
-    startOnlineRound(onlinePlayerId); setPanel(null)
+    startOnlineRound(onlinePlayerId); setPanel(null); setGoogleSetup(false)
     setCategory(nextCategory); setDifficulty(nextDifficulty); setMode(nextMode); setProverbPlay(nextPlay)
     setRound(nextMode === 'proverb' ? drawProverb(history, puzzle.word) : nextMode === 'slang' ? drawSlang(history, puzzle.word) : drawPuzzle(nextCategory, nextDifficulty, history, puzzle.word))
     setGuessed([]); setAnswer(''); setWrongAnswers([]); setSlangSolved(false); composing.current = false
@@ -201,7 +211,7 @@ export default function AssemblyEndgame() {
       <p>မှားခွင့် ၈ ကြိမ်ရှိပါတယ်။ Hint အခမဲ့ တစ်ကြိမ်ယူနိုင်ပါတယ်။ အချိန်ကန့်သတ်ချက် မရှိပါ။</p>
       <button className="next-game" onClick={() => setPanel(null)}>ဆက်ကစားမယ်</button>
     </Panel>}
-    {panel === 'account' && <Panel title={session ? 'သင့်ကစားသူနာမည်' : 'နာမည်ထည့်ပြီး စကစားပါ'} onClose={() => setPanel(null)}><Account session={session} onPlayerReady={userId => newGame(category, difficulty, mode, proverbPlay, userId)}/></Panel>}
+    {panel === 'account' && <Panel title={session ? 'သင့်ကစားသူနာမည်' : 'နာမည်ထည့်ပြီး စကစားပါ'} onClose={() => setPanel(null)}><Account session={session} confirmGoogleName={googleSetup} onPlayerReady={userId => newGame(category, difficulty, mode, proverbPlay, userId)}/></Panel>}
     {panel === 'leaderboard' && <Panel title="Leaderboard" onClose={() => setPanel(null)}><Leaderboard initialMode={statsKey} userId={session?.user.id}/></Panel>}
     {panel === 'meaning' && <Panel title="အဖြေနဲ့ အဓိပ္ပာယ်" onClose={() => setPanel(null)}><h3>{puzzle.word}</h3><p>{puzzle.meaning}</p><button className="next-game" onClick={() => newGame()}>နောက်တစ်ပွဲ ကစားမယ် →</button></Panel>}
     {won && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && <ReactConfetti recycle={false} numberOfPieces={80} style={{position:'fixed',pointerEvents:'none'}}/>}
