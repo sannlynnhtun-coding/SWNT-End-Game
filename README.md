@@ -1,20 +1,28 @@
-# React + Vite
+# Assembly Endgame / Word Rescue
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite word game with English words, Myanmar slang, and Myanmar proverbs. Proverbs support multiple choice and typed answers with the first half visible from the start.
 
-Currently, two official plugins are available:
+## Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```sh
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+`npm run lint` and `npm run build` validate the project.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Layout
 
-## Assembly: End-Game
-This is a fun React Project.
-    User has to predict the word by selecting one character at a time. Each time user select the wrong character, a programming language would be eleminated. At last, Assembly would be eliminated. That's why this game is called Assembly: End-Game.
+The game fits one viewport, including the result and next-round action. Settings, account, meanings, and leaderboard open in accessible modal panels. Long panel contents can scroll independently so text remains readable. Software keyboard viewport changes keep the typed-answer form visible.
 
-[You can play the game via this vercel link](https://end-game-woad.vercel.app/)
+## Accounts and leaderboard
 
-![Game Preview](public/preview.png)
+Supabase email/password accounts are optional; guests can play immediately. Signed-in players' new rounds are saved with retry-safe UUIDs. Rankings are separated by English difficulty, slang, and the two proverb play modes.
+
+Run the database migration and configure Auth as described in [Supabase setup](supabase/README.md). The supplied publishable browser key cannot create database tables or change Auth settings.
+
+Rankings are casual and client-reported. See the setup document for the security scope and production configuration.
+
+## Production
+
+https://swnt-end-game.vercel.app/
