@@ -1,180 +1,131 @@
-import { useState } from "react"
-import { clsx } from "clsx"
-import { languages } from "./languages"
-import { getFarewellText, getRandomWord } from "./utils"
-import ReactConfetti from "react-confetti"
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { languages } from './languages'
+import { categories, pickWord } from './gameData'
+import ReactConfetti from 'react-confetti'
 
-export default function AssemblyEndgame() {
-  // State values
-  const [currentWord, setCurrentWord] = useState("react")
-  const [guessedLetters, setGuessedLetters] = useState([])
-
-  // Derived values
-  const numGuessesLeft = languages.length - 1
-  const wrongGuessCount =
-    guessedLetters.filter(letter => !currentWord.includes(letter)).length
-  const isGameWon =
-    currentWord.split("").every(letter => guessedLetters.includes(letter))
-  const isGameLost = wrongGuessCount >= numGuessesLeft
-  const isGameOver = isGameWon || isGameLost
-  const lastGuessedLetter = guessedLetters[guessedLetters.length - 1]
-  const isLastGuessIncorrect = lastGuessedLetter && !currentWord.includes(lastGuessedLetter)
-
-  // Static values
-  const alphabet = "abcdefghijklmnopqrstuvwxyz"
-
-  function addGuessedLetter(letter) {
-    setGuessedLetters(prevLetters =>
-      prevLetters.includes(letter) ?
-        prevLetters :
-        [...prevLetters, letter]
-    )
-  }
-
-  const languageElements = languages.map((lang, index) => {
-    const isLanguageLost = index < wrongGuessCount
-    const styles = {
-      backgroundColor: lang.backgroundColor,
-      color: lang.color
-    }
-    const className = clsx("chip", isLanguageLost && "lost")
-    return (
-      <span
-        className={className}
-        style={styles}
-        key={lang.name}
-      >
-        {lang.name}
-      </span>
-    )
-  })
-
-  const letterElements = currentWord.split("").map((letter, index) => {
-    const shouldRevealLetter = isGameLost || guessedLetters.includes(letter)
-    const letterClassName = clsx(
-      isGameLost && !guessedLetters.includes(letter) && "missed-letter"
-    )
-    return (
-      <span key={index} className={letterClassName}>
-        {shouldRevealLetter ? letter.toUpperCase() : ""}
-      </span>
-    )
-  })
-
-  const keyboardElements = alphabet.split("").map(letter => {
-    const isGuessed = guessedLetters.includes(letter)
-    const isCorrect = isGuessed && currentWord.includes(letter)
-    const isWrong = isGuessed && !currentWord.includes(letter)
-    const className = clsx({
-      correct: isCorrect,
-      wrong: isWrong
-    })
-
-    return (
-      <button
-        className={className}
-        key={letter}
-        disabled={isGameOver}
-        aria-disabled={guessedLetters.includes(letter)}
-        aria-label={`Letter ${letter}`}
-        onClick={() => addGuessedLetter(letter)}
-      >
-        {letter.toUpperCase()}
-      </button>
-    )
-  })
-
-  const gameStatusClass = clsx("game-status", {
-    won: isGameWon,
-    lost: isGameLost,
-    farewell: !isGameOver && isLastGuessIncorrect
-  })
-
-  function renderGameStatus() {
-    if (!isGameOver && isLastGuessIncorrect) {
-      return (
-        <p className="farewell-message">
-          {getFarewellText(languages[wrongGuessCount - 1].name)}
-        </p>
-      )
-    }
-
-    if (isGameWon) {
-      return (
-        <>
-          <h2>You win!</h2>
-          <p>Well done! 🎉</p>
-        </>
-      )
-    }
-    if (isGameLost) {
-      return (
-        <>
-          <h2>Game over!</h2>
-          <p>You lose! Better start learning Assembly 😭</p>
-        </>
-      )
-    }
-
-    return null
-  }
-
-  function startNewGame() {
-    setCurrentWord(() => getRandomWord())
-    setGuessedLetters([])
-  }
-
-  return (
-    <main>
-      {
-        isGameWon && <ReactConfetti />
-      }
-      <header>
-        <h1>Assembly: Endgame</h1>
-        <p>Guess the word within 8 attempts to keep the
-          programming world safe from Assembly!</p>
-      </header>
-
-      <section
-        aria-live="polite"
-        role="status"
-        className={gameStatusClass}
-      >
-        {renderGameStatus()}
-      </section>
-
-      <section className="language-chips">
-        {languageElements}
-      </section>
-
-      <section className="word">
-        {letterElements}
-      </section>
-
-      {/* Combined visually-hidden aria-live region for status updates */}
-      <section
-        className="sr-only"
-        aria-live="polite"
-        role="status"
-      >
-        <p>
-          {currentWord.includes(lastGuessedLetter) ?
-            `Correct! The letter ${lastGuessedLetter} is in the word.` :
-            `Sorry, the letter ${lastGuessedLetter} is not in the word.`
-          }
-          You have {numGuessesLeft} attempts left.
-        </p>
-        <p>Current word: {currentWord.split("").map(letter =>
-          guessedLetters.includes(letter) ? letter + "." : "blank.")
-          .join(" ")}</p>
-
-      </section>
-
-      <section className="keyboard">
-        {keyboardElements}
-      </section>
-
-      {isGameOver && <button className="new-game" onClick={() => startNewGame()}>New Game</button>}
-    </main>
-  )
+function readStored(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key))
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  } catch { return {} }
 }
+function readStats() {
+  const record = readStored('assembly-stats')
+  const count = field => Number.isSafeInteger(record[field]) && record[field] >= 0 ? record[field] : 0
+  return { streak: count('streak'), best: count('best'), wins: count('wins') }
+}
+export default function AssemblyEndgame() {
+  const [category, setCategory] = useState('daily')
+  const [puzzle, setPuzzle] = useState(() => pickWord('daily'))
+  const [guessed, setGuessed] = useState([])
+  const [clueShown, setClueShown] = useState(false)
+  const [hintUsed, setHintUsed] = useState(false)
+  const [sound, setSound] = useState(false)
+  const [stats, setStats] = useState(readStats)
+  const [pendingSettings, setPendingSettings] = useState(null)
+  const [message, setMessage] = useState('စာလုံးတစ်လုံး ရွေးပြီး စတင်လိုက်ပါ။')
+  const scored = useRef(false)
+  const audio = useRef(null)
+  const wrong = guessed.filter(letter => !puzzle.word.includes(letter)).length
+  const won = [...puzzle.word].every(letter => guessed.includes(letter))
+  const lost = wrong >= 8
+  const over = won || lost
+  const activeCategory = categories.find(item => item.id === category)
+  useEffect(() => {
+    try { localStorage.setItem('assembly-stats', JSON.stringify(stats)) } catch { /* Play remains available without storage. */ }
+  }, [stats])
+
+  const playTone = useCallback((correct) => {
+    if (!sound) return
+    try {
+      audio.current ||= new (window.AudioContext || window.webkitAudioContext)()
+      const ctx = audio.current
+      void ctx.resume()
+      const oscillator = ctx.createOscillator(), gain = ctx.createGain()
+      oscillator.type = 'sine'
+      oscillator.frequency.setValueAtTime(correct ? 660 : 180, ctx.currentTime)
+      gain.gain.setValueAtTime(0.055, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
+      oscillator.connect(gain); gain.connect(ctx.destination)
+      oscillator.start(); oscillator.stop(ctx.currentTime + 0.15)
+    } catch { /* Sound is optional when browser audio is unavailable. */ }
+  }, [sound])
+
+  const guess = useCallback((letter) => {
+    if (over || pendingSettings || guessed.includes(letter)) return
+    const correct = puzzle.word.includes(letter)
+    setGuessed(previous => [...previous, letter])
+    setMessage(correct ? `${letter.toUpperCase()} ပါတယ်။ ကယ်တင်ဖို့ နီးလာပြီ!` : `${letter.toUpperCase()} မပါဘူး။ ${languages[wrong].name} ထွက်သွားပြီ… ဆက်ကြိုးစားမယ်!`)
+    playTone(correct)
+  }, [over, pendingSettings, guessed, puzzle.word, wrong, playTone])
+
+  useEffect(() => {
+    function onKey(event) {
+      if (pendingSettings) {
+        if (event.key === 'Escape') setPendingSettings(null)
+        if (event.key === 'Tab') {
+          const buttons = [...document.querySelectorAll('.confirm button')]
+          const target = event.shiftKey ? buttons[0] : buttons[buttons.length - 1]
+          if (document.activeElement === target) { event.preventDefault(); (event.shiftKey ? buttons[buttons.length - 1] : buttons[0]).focus() }
+        }
+        return
+      }
+      if (event.ctrlKey || event.altKey || event.metaKey || /^(INPUT|SELECT|TEXTAREA)$/.test(event.target.tagName)) return
+      if (/^[a-z]$/i.test(event.key)) { event.preventDefault(); guess(event.key.toLowerCase()) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [guess, pendingSettings])
+
+  useEffect(() => {
+    if (!over || scored.current) return
+    scored.current = true
+    const streak = won ? stats.streak + 1 : 0
+    setStats({ streak, best: Math.max(stats.best, streak), wins: stats.wins + (won ? 1 : 0) })
+  }, [over, won, stats])
+
+  function newGame(nextCategory = category) {
+    setCategory(nextCategory); setPuzzle(pickWord(nextCategory, puzzle.word))
+    setGuessed([]); setClueShown(false); setHintUsed(false); setPendingSettings(null)
+    setMessage('စာလုံးတစ်လုံး ရွေးပြီး စတင်လိုက်ပါ။'); scored.current = false
+  }
+  function changeSettings(nextCategory) {
+    if (nextCategory === category) return
+    if (!over && (guessed.length || clueShown)) setPendingSettings(nextCategory)
+    else newGame(nextCategory)
+  }
+  function revealLetter() {
+    if (over || hintUsed || pendingSettings) return
+    const remaining = [...new Set([...puzzle.word].filter(letter => !guessed.includes(letter)))]
+    const letter = remaining[Math.floor(Math.random() * remaining.length)]
+    setHintUsed(true); setGuessed(previous => [...previous, letter])
+    setMessage(`${letter.toUpperCase()} ကို ဖော်ပေးလိုက်ပြီ။ အသက်မလျော့ပါဘူး။`); playTone(true)
+  }
+
+  return <main className="arcade-shell">
+    <header className="topbar"><a className="brand" href="./"><span className="brand-mark">A_</span><span>ASSEMBLY<span className="brand-sub">ENDGAME / WORD RESCUE</span></span></a><button className="sound-button" aria-pressed={sound} onClick={() => setSound(!sound)}>အသံ {sound ? 'ဖွင့်ထား' : 'ပိတ်ထား'}</button></header>
+    <div className="game-layout">
+      <aside className="sidebar"><span className="eyebrow">CHOOSE YOUR MISSION</span><h1>စာလုံးရှာပါ။<br/><span>ကမ္ဘာကို ကယ်ပါ။</span></h1><p className="intro">စာလုံးမှားတိုင်း language တစ်ခု ပျောက်မယ်။ Assembly ပဲ မကျန်ခဲ့စေနဲ့!</p>
+        <label className="category-label" htmlFor="category">အမျိုးအစား ရွေးပါ</label><select id="category" value={category} onChange={event => changeSettings(event.target.value)}>{categories.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select>
+        <div className="stats"><div><strong>{stats.streak.toString().padStart(2,'0')}</strong><span>ဆက်တိုက်နိုင်ပွဲ</span></div><div><strong>{stats.best.toString().padStart(2,'0')}</strong><span>အကောင်းဆုံး</span></div></div>
+        <div className="instructions"><span className="eyebrow">HOW TO PLAY</span><p>01 <span>English word ကို ခန့်မှန်းပါ။</span></p><p>02 <span>မှားခွင့် ၈ ကြိမ် ရှိပါတယ်။</span></p><p>03 <span>ခက်နေရင် hint ယူပါ။</span></p></div><p className="sidebar-foot">NO TIMER. TAKE YOUR TIME.</p>
+      </aside>
+      <section className="game-board" aria-label="Word rescue game">
+        <div className="board-top"><span className="eyebrow">MISSION / {activeCategory.label}</span><span className={'live-label ' + (over ? 'finished' : '')}>{over ? 'ROUND COMPLETE' : 'GAME ON'}</span></div>
+        <div className="life-heading"><span>ကျန်တဲ့ မှားခွင့်</span><strong className={wrong >= 6 ? 'danger' : ''}>{8 - wrong}<span> / 8</span></strong></div>
+        <div className="life-bar" aria-label={`မှားခွင့် ${8-wrong} ကြိမ်ကျန်`}>{Array.from({length:8}, (_,index) => <span key={index} className={index < 8-wrong ? 'alive' : ''}/>)}</div>
+        <div className="language-chips">{languages.map((language,index) => <span key={language.name} className={`chip ${index < wrong ? 'lost' : ''} ${index === 8 ? 'assembly' : ''}`} style={{'--chip-color':language.backgroundColor}}>{index < wrong && <span aria-label="ပျောက်သွားပြီ">× </span>}{language.name}</span>)}</div>
+        <div className="word-area"><span className="eyebrow">{puzzle.word.length} LETTERS · {activeCategory.label}</span><div className="word" aria-label="ခန့်မှန်းရမယ့် စကားလုံး">{[...puzzle.word].map((letter,index) => <span key={index} className={guessed.includes(letter) ? 'revealed' : lost ? 'missed' : ''}>{guessed.includes(letter) || lost ? letter.toUpperCase() : <span className="blank-mark"/>}</span>)}</div></div>
+        <div className={'status ' + (won ? 'won' : lost ? 'failed' : '')} role="status" aria-live="polite">{won ? 'ကယ်တင်နိုင်ပြီ! အားလုံး လွတ်မြောက်သွားပြီ။' : lost ? 'ဒီပွဲ ရှုံးသွားပြီ။ နောက်တစ်ပွဲ ထပ်ကြိုးစားမယ်!' : message}{over && <p><strong>{puzzle.word.toUpperCase()}</strong> — {puzzle.meaning}</p>}</div>
+        <div className="hint-panel"><div><span className="eyebrow">MISSION INTEL / အရိပ်အမြွက်</span><p>{clueShown || over ? puzzle.clue : 'ခက်နေပြီလား? မြန်မာလို clue ကို အခမဲ့ ကြည့်နိုင်ပါတယ်။'}</p></div><div className="hint-actions"><button disabled={clueShown || over} onClick={() => setClueShown(true)}>{clueShown ? 'Clue ပြထားပြီး' : 'Clue ကြည့်မယ်'}<small>အခမဲ့</small></button><button disabled={hintUsed || over} onClick={revealLetter}>{hintUsed ? 'အသုံးပြုပြီး' : 'Letter ဖော်မယ်'}<small>{hintUsed ? '၀ ကြိမ်ကျန်' : '၁ ကြိမ်ကျန် · အခမဲ့'}</small></button></div></div>
+        <div className="keyboard" aria-label="စာလုံးရွေးပါ">{['qwertyuiop','asdfghjkl','zxcvbnm'].map(row => <div className="keyboard-row" key={row}>{[...row].map(letter => <button key={letter} disabled={over || guessed.includes(letter)} className={guessed.includes(letter) ? puzzle.word.includes(letter) ? 'correct' : 'wrong' : ''} aria-label={`Letter ${letter.toUpperCase()}${guessed.includes(letter) ? puzzle.word.includes(letter) ? ', correct' : ', incorrect' : ''}`} onClick={() => guess(letter)}>{letter.toUpperCase()}</button>)}</div>)}</div>
+        <footer className="board-footer">{over ? <button className="next-game" onClick={() => newGame()}>နောက်တစ်ပွဲ ကစားမယ် →</button> : <span>Screen ပေါ်မှာ နှိပ်ပါ၊ သို့မဟုတ် keyboard နဲ့ ရိုက်ပါ။</span>}<span className="round-tag">SAVE THE STACK.</span></footer>
+      </section>
+    </div>
+    {won && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && <ReactConfetti recycle={false} numberOfPieces={160} style={{position:'fixed',pointerEvents:'none'}}/>}
+    {pendingSettings && <div className="modal-backdrop"><section className="confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-title"><h2 id="confirm-title">အမျိုးအစား ပြောင်းမလား?</h2><p>လက်ရှိပွဲကို ရပ်ပြီး အမျိုးအစားအသစ်နဲ့ ပွဲပြန်စပါမယ်။</p><button autoFocus onClick={() => setPendingSettings(null)}>လက်ရှိပွဲ ဆက်ကစားမယ်</button><button className="next-game" onClick={() => newGame(pendingSettings)}>ပြောင်းပြီး ပွဲအသစ်စမယ်</button></section></div>}
+  </main>
+}
+
+
+
