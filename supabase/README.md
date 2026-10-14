@@ -18,3 +18,7 @@ All three game tables use RLS and have no direct anon/authenticated table grants
 This is a **casual, client-reported leaderboard**, not an anti-cheat competitive ranking. RPCs prevent direct score editing and modifying another user's totals, but a determined user can submit fabricated completed rounds for their own account. Competitive rankings require server-issued puzzles and server-validated moves/answers. No prizes or trusted competition should rely on this ranking.
 
 No live database migration or real Auth verification has been performed until project access is available. SQL was verified in a local PostgreSQL-compatible runtime with Auth stubs; this does not replace testing against the project's actual Auth configuration.
+
+## Feedback
+
+Run `migrations/202610140002_feedback.sql` in the project's SQL Editor. Feedback requires an authenticated player (anonymous nickname accounts count), allows one submission per account per calendar day in `Asia/Rangoon`, and resets at Myanmar midnight. The unique database constraint rejects concurrent duplicates. Messages are 10–2000 characters and remain private to project administrators; no direct table access is granted to browser clients. Feedback is viewable in Supabase Table Editor > `game_feedback`.

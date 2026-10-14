@@ -4,6 +4,7 @@ import { categories, difficulties, drawPuzzle } from './gameData'
 import { drawSlang, isSlangAnswer, normalizeSlang } from './slangData'
 import { drawProverb, isProverbAnswer, proverbCount } from './proverbData'
 import Panel from './components/Panel'
+import Feedback from './components/Feedback'
 import Account, { Leaderboard } from './components/Online'
 import useGameAccount from './useGameAccount'
 import ReactConfetti from 'react-confetti'
@@ -187,7 +188,7 @@ export default function AssemblyEndgame() {
     <header className="topbar">
       <a className="brand" href="./"><span className="brand-mark">A_</span><span>ASSEMBLY<span className="brand-sub">ENDGAME / WORD RESCUE</span></span></a>
       <nav className="game-nav" aria-label="Game navigation">
-        <button onClick={() => setPanel('settings')}>Settings</button><button onClick={() => setPanel('leaderboard')}>Leaderboard</button><button onClick={() => setPanel('account')}>{session ? 'ကစားသူ' : 'နာမည်ထည့်မယ်'}</button>
+        <button onClick={() => setPanel('settings')}>Settings</button><button onClick={() => setPanel('leaderboard')}>Leaderboard</button><button onClick={() => setPanel('feedback')}>Feedback</button><button onClick={() => setPanel('account')}>{session ? 'ကစားသူ' : 'နာမည်ထည့်မယ်'}</button>
       </nav>
     </header>
     <section className={`game-board ${isMyanmar ? 'myanmar-board' : 'english-board'}`} aria-label="Word rescue game">
@@ -212,6 +213,7 @@ export default function AssemblyEndgame() {
       <button className="next-game" onClick={() => setPanel(null)}>ဆက်ကစားမယ်</button>
     </Panel>}
     {panel === 'account' && <Panel title={session ? 'သင့်ကစားသူနာမည်' : 'နာမည်ထည့်ပြီး စကစားပါ'} onClose={() => setPanel(null)}><Account session={session} confirmGoogleName={googleSetup} onPlayerReady={userId => newGame(category, difficulty, mode, proverbPlay, userId)}/></Panel>}
+    {panel === 'feedback' && <Panel title="Feedback ပေးမယ်" onClose={() => setPanel(null)}><Feedback key={session?.user.id || 'guest'} session={session} onSignIn={() => setPanel('account')}/></Panel>}
     {panel === 'leaderboard' && <Panel title="Leaderboard" onClose={() => setPanel(null)}><Leaderboard initialMode={statsKey} userId={session?.user.id}/></Panel>}
     {panel === 'meaning' && <Panel title="အဖြေနဲ့ အဓိပ္ပာယ်" onClose={() => setPanel(null)}><h3>{puzzle.word}</h3><p>{puzzle.meaning}</p><button className="next-game" onClick={() => newGame()}>နောက်တစ်ပွဲ ကစားမယ် →</button></Panel>}
     {won && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && <ReactConfetti recycle={false} numberOfPieces={80} style={{position:'fixed',pointerEvents:'none'}}/>}
