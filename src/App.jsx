@@ -7,6 +7,7 @@ import Panel from './components/Panel'
 import Feedback from './components/Feedback'
 import Account from './components/Online'
 import LeaderboardPage from './components/LeaderboardPage'
+import PlayerProfile from './components/PlayerProfile'
 import AboutCredits, { SlangCredit } from './components/AboutCredits'
 import GameModeArt from './components/GameModeArt'
 import MyanmarChallenge from './components/MyanmarChallenge'
@@ -27,7 +28,7 @@ function AccountAvatar({ user, onClick, expanded }) {
   </button>
 }
 
-function HeaderAccount({ user, onAccount, onFeedback }) {
+function HeaderAccount({ user, onAccount, onFeedback, onProfile }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -55,6 +56,7 @@ function HeaderAccount({ user, onAccount, onFeedback }) {
     {open && <div id="account-actions" className="account-actions" aria-label="Account actions" onKeyDown={event => { if (event.key !== 'Escape') event.stopPropagation() }}>
       <button onClick={() => choose(onAccount)}>{user ? 'သင့်အကောင့် · Account' : 'ဝင်မယ် · Sign in'}</button>
       <button onClick={() => choose(onFeedback)}>Feedback</button>
+      {user && <button onClick={() => choose(onProfile)}>သင့် Profile · Activity</button>}
       {user && <button disabled={busy} onClick={logout}>{busy ? 'ခဏစောင့်ပါ…' : 'ထွက်မယ် · Logout'}</button>}
       {error && <p role="alert">{error}</p>}
     </div>}
@@ -90,20 +92,23 @@ export default function AssemblyEndgame() {
   }, [session])
 
   const [mode, setMode] = useState('english')
-  const [screen, setScreen] = useState(() => window.location.pathname === '/leaderboard' ? 'leaderboard' : window.location.pathname === '/about' ? 'about' : 'landing')
+  const [screen, setScreen] = useState(() => window.location.pathname === '/leaderboard' ? 'leaderboard' : window.location.pathname === '/about' ? 'about' : window.location.pathname.startsWith('/players/') ? 'profile' : 'landing')
+  const [profileId, setProfileId] = useState(() => window.location.pathname.split('/')[2] || '')
   const leaderboardReturn = useRef('landing')
   const [startedAt, setStartedAt] = useState(null)
   const [elapsedMs, setElapsedMs] = useState(0)
   useEffect(() => {
-    const navigate = () => setScreen(window.location.pathname === '/leaderboard' ? 'leaderboard' : window.location.pathname === '/about' ? 'about' : leaderboardReturn.current)
+    const navigate = () => { setProfileId(window.location.pathname.split('/')[2] || ''); setScreen(window.location.pathname === '/leaderboard' ? 'leaderboard' : window.location.pathname === '/about' ? 'about' : window.location.pathname.startsWith('/players/') ? 'profile' : leaderboardReturn.current) }
     window.addEventListener('popstate', navigate)
     return () => window.removeEventListener('popstate', navigate)
   }, [])
   function openPage(page) {
-    if (screen === page) return
-    if (screen !== 'leaderboard' && screen !== 'about') leaderboardReturn.current = screen
+    const target = page.startsWith('players/') ? 'profile' : page
+    if (screen === target && (target !== 'profile' || profileId === page.split('/')[1])) return
+    if (!['leaderboard', 'about', 'profile'].includes(screen)) leaderboardReturn.current = screen
     window.history.pushState({ auxiliaryPage: true }, '', `/${page}`)
-    setScreen(page)
+    if (target === 'profile') setProfileId(page.split('/')[1])
+    setScreen(target)
   }
   function closePage() {
     if (window.history.state?.auxiliaryPage) window.history.back()
@@ -291,13 +296,13 @@ export default function AssemblyEndgame() {
     <header className="topbar">
       <a className="brand" href="/" aria-label="Home · Choose game" onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); window.history.pushState({}, '', '/'); leaderboardReturn.current = 'landing'; setSetupMode(null); setScreen('landing') } }}><span className="brand-mark">A_</span><span>ASSEMBLY<span className="brand-sub">ENDGAME / WORD RESCUE</span></span></a>
       <div className="header-controls">
-        <a className="header-icon" href="/leaderboard" aria-label="Leaderboard" title="Leaderboard" aria-current={screen === 'myanmar-game' ? authReady ? <MyanmarChallenge key={statsKey} mode={statsKey} userId={session?.user.id || null} blocked={Boolean(panel)} onExit={() => { setSetupMode(null); setScreen('landing') }} saveResult={saveChallengeResult} cloudMessage={cloudMessage} pendingCloud={pendingCloud} retryCloud={retryCloud} /> : <p role="status">ပွဲကို ပြင်ဆင်နေပါတယ်…</p> : screen === 'leaderboard' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('leaderboard') } }}><BarChartIcon width={24} height={24} aria-hidden="true" /></a>
+        <a className="header-icon" href="/leaderboard" aria-label="Leaderboard" title="Leaderboard" aria-current={screen === 'leaderboard' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('leaderboard') } }}><BarChartIcon width={24} height={24} aria-hidden="true" /></a>
         <a className="header-icon" href="/about" aria-label="About & Credits" title="About & Credits" aria-current={screen === 'about' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('about') } }}><InfoCircledIcon width={24} height={24} aria-hidden="true" /></a>
         <button className="header-sound" aria-label={sound ? 'အသံ ပိတ်မယ်' : 'အသံ ဖွင့်မယ်'} title={sound ? 'အသံ ပိတ်မယ်' : 'အသံ ဖွင့်မယ်'} aria-pressed={sound} onClick={() => setSound(!sound)}>{sound ? <SpeakerLoudIcon width={24} height={24} aria-hidden="true" /> : <SpeakerOffIcon width={24} height={24} aria-hidden="true" />}</button>
-        <HeaderAccount user={session?.user} onAccount={() => setPanel('account')} onFeedback={() => setPanel('feedback')} />
+        <HeaderAccount user={session?.user} onAccount={() => setPanel('account')} onFeedback={() => setPanel('feedback')} onProfile={() => openPage(`players/${session.user.id}`)} />
       </div>
     </header>
-    {screen === 'myanmar-game' ? authReady ? <MyanmarChallenge key={statsKey} mode={statsKey} userId={session?.user.id || null} blocked={Boolean(panel)} onExit={() => { setSetupMode(null); setScreen('landing') }} saveResult={saveChallengeResult} cloudMessage={cloudMessage} pendingCloud={pendingCloud} retryCloud={retryCloud} /> : <p role="status">ပွဲကို ပြင်ဆင်နေပါတယ်…</p> : screen === 'leaderboard' ? <LeaderboardPage initialMode={statsKey} userId={session?.user.id} onBack={closePage} headingRef={screenTitle} /> : screen === 'about' ? <section className="about-page" aria-labelledby="about-title"><button className="setup-back" onClick={closePage}>← နောက်သို့ / Back</button><h1 id="about-title" ref={screenTitle} tabIndex={-1}>About & Credits</h1><AboutCredits /></section> : screen === 'landing' ? <section className="landing-page" aria-labelledby="landing-title">
+    {screen === 'myanmar-game' ? authReady ? <MyanmarChallenge key={statsKey} mode={statsKey} userId={session?.user.id || null} blocked={Boolean(panel)} onExit={() => { setSetupMode(null); setScreen('landing') }} saveResult={saveChallengeResult} cloudMessage={cloudMessage} pendingCloud={pendingCloud} retryCloud={retryCloud} /> : <p role="status">ပွဲကို ပြင်ဆင်နေပါတယ်…</p> : screen === 'profile' ? <PlayerProfile key={profileId} playerId={profileId} userId={session?.user.id} onBack={closePage} headingRef={screenTitle} /> : screen === 'leaderboard' ? <LeaderboardPage initialMode={statsKey} userId={session?.user.id} onBack={closePage} headingRef={screenTitle} onProfile={id => openPage(`players/${id}`)} /> : screen === 'about' ? <section className="about-page" aria-labelledby="about-title"><button className="setup-back" onClick={closePage}>← နောက်သို့ / Back</button><h1 id="about-title" ref={screenTitle} tabIndex={-1}>About & Credits</h1><AboutCredits /></section> : screen === 'landing' ? <section className="landing-page" aria-labelledby="landing-title">
       <div className="landing-intro"><span className="eyebrow">ASSEMBLY / WORD RESCUE</span><h1 id="landing-title" ref={screenTitle} tabIndex={-1}>ဒီနေ့ ဘာကစားမလဲ?</h1><p>ကစားချင်တဲ့ mode ကို ရွေးပြီး စတင်လိုက်ပါ။</p></div>
       <div className="challenge-resume-links">{[['slang', 'မြန်မာ Slang'], ['proverb-choice', 'စကားပုံ · ရွေးဖြေ'], ['proverb-input', 'စကားပုံ · ရိုက်ဖြေ']].filter(([id]) => { const saved = readStored(`assembly-challenge-v1:${id}`); return saved.id && saved.phase !== 'finished' && saved.userId === (session?.user.id || null) }).map(([id, label]) => <button key={id} onClick={() => newGame(category, difficulty, id === 'slang' ? 'slang' : 'proverb', id === 'proverb-input' ? 'input' : 'choice')}>{label} · ပြန်ဆက်မယ် →</button>)}</div>
       <div className="game-mode-cards" aria-label="Game mode">

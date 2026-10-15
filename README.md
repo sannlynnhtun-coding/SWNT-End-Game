@@ -50,3 +50,11 @@ Apply `supabase/migrations/202610160004_challenge_runs.sql` before deploying thi
 Validation: `node --test scripts/challenge.test.mjs`, `npm run lint`, `npm run build`. Run `supabase/tests/challenge_runs.sql` in the SQL editor to test ranking, retries, and permissions with rolled-back fixtures.
 
 Paused runs also publish their current correct count and cumulative active time to the leaderboard. Migration `202610160005_paused_challenge_scores.sql` permits monotonic updates to the same run UUID while paused; final results are immutable. Old or reordered paused snapshots cannot reduce counters/time or reopen a finalized run. The outbox replaces pending snapshots for the same run and acknowledges only the matching queue entry. Signed-in players can see save/retry status in the pause panel.
+
+## Public player profiles
+
+Open your profile from the avatar menu or another player's profile from their leaderboard name. `/players/<player UUID>` is shareable. The 365-day chart uses the existing navy/mint theme and displays saved correct answers, grouped by Myanmar calendar date. It is a game-activity chart; no GitHub account connection is required. The chart scrolls horizontally on mobile and provides a readable daily-totals list.
+
+Apply migration `202610160006_player_activity.sql` before deployment. Activity triggers count only newly added correct answers when a paused challenge is updated. Historical scores are backfilled to their original saved date, since historical per-answer timestamps were not recorded. Public profile RPC output contains only player ID, display name, aggregate correct counts and daily counts, without email or authentication metadata. Existing theme color remains `#090f18` in `index.html` and the PWA manifest.
+
+Tests: `node --test scripts/activity.test.mjs scripts/challenge.test.mjs` and `supabase/tests/player_activity.sql` (fixtures roll back).

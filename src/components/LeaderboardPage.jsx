@@ -10,16 +10,16 @@ const groups = [
   { id: 'english', label: 'English', modes: [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']] },
 ]
 
-function PlayerRow({ row, userId, challenge }) {
+function PlayerRow({ row, userId, challenge, onProfile }) {
   return <>
     <span className="leaderboard-rank">#{row.rank}</span>
     <span className="leaderboard-avatar" aria-hidden="true">{Array.from(row.display_name.trim())[0] || '?'}</span>
-    <div className="leaderboard-player"><strong>{row.display_name}{row.player_id === userId && <span className="leaderboard-you-label"> သင်</span>}</strong><span>{challenge ? `ပြီးစီး ${row.correct + row.incorrect + row.skipped} / ${row.total} · ${row.finish_reason === 'completed' ? 'အားလုံးပြီးဆုံး' : row.finish_reason === 'lives' ? 'အသက်ကုန်' : row.finish_reason === 'paused' ? 'ခဏနားထား' : 'အဆုံးသတ်ထား'}` : `Best streak ${row.best_streak} · စကားပုံနိုင်ပွဲ ${row.proverb_wins}`}</span></div>
+    <div className="leaderboard-player"><strong><a href={`/players/${row.player_id}`} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); onProfile(row.player_id) } }}>{row.display_name}</a>{row.player_id === userId && <span className="leaderboard-you-label"> သင်</span>}</strong><span>{challenge ? `ပြီးစီး ${row.correct + row.incorrect + row.skipped} / ${row.total} · ${row.finish_reason === 'completed' ? 'အားလုံးပြီးဆုံး' : row.finish_reason === 'lives' ? 'အသက်ကုန်' : row.finish_reason === 'paused' ? 'ခဏနားထား' : 'အဆုံးသတ်ထား'}` : `Best streak ${row.best_streak} · စကားပုံနိုင်ပွဲ ${row.proverb_wins}`}</span></div>
     <div className="leaderboard-score"><strong>{challenge ? row.correct : row.wins} <small>{challenge ? 'ဖြေမှန်' : 'နိုင်ပွဲ'}</small></strong><span>{challenge ? `စုစုပေါင်း ${formatTime(row.elapsed_ms)}` : row.average_ms == null ? 'အချိန် မရှိသေး' : `ပျမ်းမျှ ${formatTime(row.average_ms)}`}</span></div>
   </>
 }
 
-export default function LeaderboardPage({ initialMode, userId, onBack, headingRef }) {
+export default function LeaderboardPage({ initialMode, userId, onBack, headingRef, onProfile }) {
   const [mode, setMode] = useState(initialMode)
   const [result, setResult] = useState(null)
   const [status, setStatus] = useState('loading')
@@ -58,9 +58,9 @@ export default function LeaderboardPage({ initialMode, userId, onBack, headingRe
     <p className="leaderboard-rule">{challenge ? 'အကောင်းဆုံးပွဲတစ်ပွဲရဲ့ ဖြေမှန်အရေအတွက်နဲ့ စီပါတယ်။ ဖြေမှန်တူရင် စုစုပေါင်းဖြေချိန် ပိုနည်းသူက အပေါ်ရောက်ပါမယ်။' : 'နိုင်ပွဲတူရင် ပျမ်းမျှဖြေချိန် ပိုမြန်သူက အပေါ်ရောက်ပါမယ်။'}</p>
     <div aria-busy={status === 'loading'}>
       {status === 'loading' ? <p role="status">ရလဒ်တွေ ယူနေပါတယ်…</p> : status === 'error' ? <div role="alert"><p>{error}</p><button onClick={() => { setStatus('loading'); setAttempt(value => value + 1) }}>ပြန်စမ်းမယ်</button></div> : <>
-        {userId && <section className="leaderboard-personal" aria-label="Your position"><h2>သင့်အဆင့် · Your position</h2>{personalRow ? <div className="leaderboard-personal-row"><PlayerRow row={personalRow} userId={userId} challenge={challenge} /></div> : <p>ဒီအမျိုးအစားမှာ သင့်ရလဒ် မရှိသေးပါ။</p>}</section>}
+        {userId && <section className="leaderboard-personal" aria-label="Your position"><h2>သင့်အဆင့် · Your position</h2>{personalRow ? <div className="leaderboard-personal-row"><PlayerRow row={personalRow} userId={userId} challenge={challenge} onProfile={onProfile} /></div> : <p>ဒီအမျိုးအစားမှာ သင့်ရလဒ် မရှိသေးပါ။</p>}</section>}
         <div className="leaderboard-list-heading"><h2>Top 100</h2><p className="leaderboard-count">ကစားသူ {result.participants.toLocaleString()} ဦး · ပြသထားသူ {rows.length} ဦး</p></div>
-        {!rows.length ? <p>ရလဒ် မရှိသေးပါ။ ပထမဆုံး ကစားသူ ဖြစ်လိုက်ပါ!</p> : <ol className="leaderboard-players">{rows.map(row => <li key={row.player_id} className={`${row.rank <= 3 ? 'leaderboard-winner' : ''} ${row.player_id === userId ? 'leaderboard-you' : ''}`}><PlayerRow row={row} userId={userId} challenge={challenge} /></li>)}</ol>}
+        {!rows.length ? <p>ရလဒ် မရှိသေးပါ။ ပထမဆုံး ကစားသူ ဖြစ်လိုက်ပါ!</p> : <ol className="leaderboard-players">{rows.map(row => <li key={row.player_id} className={`${row.rank <= 3 ? 'leaderboard-winner' : ''} ${row.player_id === userId ? 'leaderboard-you' : ''}`}><PlayerRow row={row} userId={userId} challenge={challenge} onProfile={onProfile} /></li>)}</ol>}
 
       </>}
     </div>
