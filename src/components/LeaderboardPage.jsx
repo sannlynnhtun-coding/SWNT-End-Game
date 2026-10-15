@@ -52,7 +52,7 @@ export default function LeaderboardPage({ initialMode, userId, onBack, headingRe
     <p className="leaderboard-total-wins">စကားပုံနိုင်ပွဲ စုစုပေါင်း <strong>{ready ? result.total_proverb_wins.toLocaleString() : '—'}</strong></p>
     <nav className="leaderboard-filters" aria-label="Leaderboard game">
       <div className="leaderboard-games">{groups.map(item => <button key={item.id} aria-pressed={group.id === item.id} onClick={() => chooseMode(item.modes[0][0])}>{item.label}</button>)}</div>
-      {group.modes.length > 1 && <div className="leaderboard-subfilters" aria-label="Game variant">{group.modes.map(([id, label]) => <button key={id} aria-pressed={mode === id} onClick={() => chooseMode(id)}>{label}</button>)}</div>}
+      {group.modes.length > 1 && <div className="leaderboard-subfilters" aria-label="Game variant">{group.modes.map(([id, label]) => <button key={id} lang={group.id === 'english' ? 'en' : 'my'} aria-pressed={mode === id} onClick={() => chooseMode(id)}>{label}</button>)}</div>}
     </nav>
     <p className="leaderboard-rule">နိုင်ပွဲတူရင် ပျမ်းမျှဖြေချိန် ပိုမြန်သူက အပေါ်ရောက်ပါမယ်။</p>
     <div aria-busy={status === 'loading'}>

@@ -14,6 +14,8 @@
 .leaderboard-games button[aria-pressed=true]{background:#293d25;color:var(--mint);border-color:#587043}
 .leaderboard-subfilters{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .leaderboard-subfilters button{display:flex;align-items:center;justify-content:center;margin:0;line-height:1.6;min-height:44px;padding:6px 18px;border-radius:24px;font-size:14px}
+/* Latin difficulty labels use Latin font metrics, rather than the Myanmar reading font. */
+.leaderboard-subfilters button[lang=en]{font-family:system-ui,sans-serif;line-height:1;height:44px;padding:0 18px}
 .leaderboard-rule{font-size:14px;line-height:2;color:#bdc9d6;margin:12px 0 20px}
 .leaderboard-personal{padding:16px;background:#17261e;border:1px solid #668849;border-radius:12px;margin-bottom:24px}
 .leaderboard-personal h2{font-size:14px;color:var(--mint);margin:0 0 8px;line-height:1.7}
