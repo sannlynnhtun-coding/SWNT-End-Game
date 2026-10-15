@@ -1,0 +1,144 @@
+/* Midnight Arcade: shared surfaces and compact, readable mobile controls. */
+:root {
+  --mint: #a9f06a;
+  --lavender: #c2b6f6;
+  --muted: #a4afc2;
+  --line: #2d3d50;
+  --surface: #15212e;
+  --surface-raised: #1c2a3b;
+}
+body { background: #090f18; }
+button, input, select { border-radius: 10px; }
+button { transition: background-color .15s, border-color .15s; }
+button:hover:not(:disabled) { background-color: #26364a; }
+button[aria-pressed=true] { background: #253b2b; }
+.next-game { border-radius: 12px; background: var(--mint); color: #16241a; }
+.next-game:hover:not(:disabled) { background: #c0fa8d; }
+.arcade-shell { max-width: 1100px; }
+.topbar { border-bottom-color: var(--line); }
+.brand { letter-spacing: 1.5px; }
+.brand-mark { border-radius: 6px; font-family: system-ui,sans-serif; font-weight: 800; }
+.header-icon, .header-sound { color: #c0bddb; }
+.header-icon[aria-current=page] { color: var(--mint); }
+.header-account:not(.signed-in) { background: var(--surface); border-color: var(--line); }
+.landing-intro { margin-bottom: 28px; }
+.landing-intro .eyebrow { color: var(--lavender); letter-spacing: 2px; }
+.landing-intro h1 { color: #f0f4fc; }
+.landing-intro p { color: #b8c2d8; }
+.game-mode-cards { gap: 16px; }
+.game-mode-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+  padding: 24px;
+  gap: 20px;
+  border-radius: 18px;
+  border-color: var(--line);
+  background: linear-gradient(145deg,#192635,#111b29);
+  box-shadow: 0 6px 18px #0002;
+}
+.game-mode-card:hover:not(:disabled) { border-color: #8077aa; background: #1b293b; }
+.mode-card-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; flex: 1; }
+.game-mode-card .mode-card-copy strong { font-size: 22px; line-height: 1.8; }
+.mode-card-description { color: #c1cbe0; font-size: 15px; line-height: 2; }
+.game-mode-card .mode-card-action { margin-top: auto; padding-top: 4px; display: flex; align-items: center; gap: 16px; font-size: 14px; line-height: 1.8; color: var(--mint); }
+.mode-card-action > span { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--mint); color: #16241a; font: 22px/1 system-ui,sans-serif; }
+.mode-art { position: relative; width: 128px; height: 100px; display: block; flex-shrink: 0; align-self: center; color: var(--lavender); }
+.letter-tile { position: absolute; display: grid; place-items: center; width: 64px; height: 72px; border-radius: 12px; background: #34324f; box-shadow: 0 8px 0 #0b1323; color: #d3c8ff; font: 800 50px/1 system-ui,sans-serif; }
+.tile-a { left: 8px; top: 16px; transform: rotate(-13deg); }
+.tile-z { left: 62px; top: 2px; transform: rotate(12deg); background: #51436c; }
+.art-spark { position: absolute; width: 18px; height: 18px; right: -8px; top: 0; }
+.art-bubble { position: absolute; display: block; width: 82px; height: 68px; }
+.art-bubble svg { width: 100%; height: 100%; }
+.bubble-back { left: 0; top: 0; transform: rotate(-12deg); color: #b9a4f5; }
+.bubble-front { left: 46px; top: 32px; transform: rotate(9deg); color: var(--mint); }
+.bubble-front > span { position: absolute; inset: 0 0 8px; display: grid; place-items: center; font: 700 24px/1 system-ui,sans-serif; }
+.art-book { position: absolute; inset: 2px 20px 0; display: grid; place-items: center; color: #e1d9f9; transform: rotate(-8deg); }
+.art-book svg { width: 90px; height: 90px; filter: drop-shadow(5px 7px 0 #4a3e68); }
+.art-leaf { position: absolute; width: 14px; height: 36px; background: #95ca7c; border-radius: 100% 0 100% 0; top: 50px; }
+.leaf-left { left: 7px; transform: rotate(-35deg); }
+.leaf-right { right: 3px; transform: rotate(30deg); }
+.creator-credit { font-size: 12px; border-color: var(--line); }
+.game-setup, .app-panel { background: var(--surface); border-color: var(--line); border-radius: 18px; }
+.game-setup h1 { color: #f0f4fc; }
+.difficulty-options button, .mode-picker button { min-height: 48px; border-radius: 12px; }
+.game-board { border-color: var(--line); background: #101a27; border-radius: 18px; }
+.board-top { align-items: center; }
+.board-top .eyebrow { color: var(--lavender); }
+.round-timer { padding: 6px 10px; border: 1px solid var(--line); border-radius: 20px; color: #d9d8f0; }
+.life-bar span { height: 6px; border-radius: 8px; }
+.life-bar .alive { background: #a9ee8c; }
+.word { gap: 8px; }
+.word > span { background: #1c2a3b; border-color: #3a4d65; border-radius: 10px; box-shadow: 0 3px 0 #0b1320; }
+.word > span.revealed { color: #b0f596; border-color: #648661; }
+.hint-panel { border-color: var(--line); background: #182535; border-radius: 14px; }
+.hint-panel p { color: #d5d3ed; }
+.hint-actions button { border-color: #8278aa; background: transparent; border-radius: 10px; color: #ddd5f6; min-height: 40px; }
+.keyboard { gap: 8px; }
+.keyboard-row { gap: 7px; }
+.keyboard button { background: #1e2c3e; border: 1px solid #3a4a61; border-bottom-width: 3px; border-radius: 9px; font-family: system-ui,sans-serif; font-weight: 650; }
+.keyboard button.correct { color: #15251c; background: #a9ee8c; border-color: #81b970; }
+.keyboard button.wrong { color: #8f96b7; background: #28273f; border-color: #44415c; text-decoration: line-through; }
+.proverb-options button { background: #1c2a3b; border-color: #3a4d65; }
+.proverb-options button:hover:not(:disabled) { border-color: var(--lavender); background: #292b45; }
+.surrender-button { color: #bbb2d9; text-underline-offset: 5px; }
+.result-summary { background: #172535; border-radius: 16px; padding: 18px; }
+.result-summary .answer-meaning strong { color: var(--lavender); }
+.leaderboard-totals > div { background: var(--surface); border: 1px solid var(--line); }
+.leaderboard-games { background: #15212e; }
+.account-actions { border-color: #5c5278; }
+.about-credits h3 { color: #d4c9f5; }
+@media(min-width:641px) {
+  .game-mode-card { min-height: 340px; }
+  .english-board .puzzle-space { padding: 12px; border-radius: 14px; background: #142030; }
+}
+@media(max-width:640px) {
+  .landing-intro { margin-bottom: 20px; }
+  .game-mode-card { flex-direction: row; align-items: center; padding: 18px; gap: 12px; border-radius: 16px; }
+  .mode-card-copy { min-width: 0; gap: 8px; }
+  .game-mode-card .mode-card-copy strong { font-size: 21px; line-height: 1.8; }
+  .mode-card-description { font-size: 15px; line-height: 1.9; }
+  .game-mode-card .mode-card-action { font-size: 13px; padding-top: 6px; gap: 10px; }
+  .mode-art { width: 88px; height: 90px; transform: scale(.78); transform-origin: center; margin-right: 5px; }
+  .mode-art .art-spark { right: -24px; }
+  .letter-tile { width: 55px; height: 64px; font-size: 42px; }
+  .tile-a { left: -5px; }
+  .tile-z { left: 40px; }
+  .art-bubble { width: 70px; }
+  .bubble-back { left: -10px; }
+  .bubble-front { left: 24px; }
+  .art-book { inset: 0; }
+  .leaf-left { left: -16px; }
+  .leaf-right { right: -12px; }
+  .game-board, [data-keyboard=open] .game-board { background: transparent; border: 0; border-radius: 0; gap: 12px; }
+  .board-top { flex-wrap: wrap; gap: 8px; }
+  .board-top .eyebrow { flex: 1 1 auto; }
+  .round-timer { font-size: 12px; }
+  .compact-stats { font-size: 11px; }
+  .english-board .puzzle-space { min-height: 100px; padding: 18px 12px; background: #15212e; border: 1px solid var(--line); border-radius: 16px; }
+  .word { gap: 5px; margin-top: 14px; }
+  .word > span { height: 52px; font-family: system-ui,sans-serif; font-weight: 700; }
+  .word.compact > span { font-size: 15px; }
+  .english-board .hint-panel { padding: 14px; }
+  .hint-panel p { font-size: 17px; }
+  .hint-actions { gap: 8px; }
+  .hint-actions button { font-size: 13px; }
+  .keyboard button { height: 48px; font-size: 16px; }
+  .keyboard-row { gap: 4px; }
+  .keyboard { gap: 6px; }
+  .surrender-button { font-size: 14px; min-height: 44px; }
+  .result-summary { padding: 20px; }
+  .proverb-options button { padding: 12px 16px; }
+}
+@media(max-width:360px) {
+  .game-mode-card { padding: 16px; gap: 4px; }
+  .game-mode-card .mode-card-copy strong { font-size: 19px; }
+  .mode-card-description { font-size: 14px; }
+  .mode-art { width: 64px; transform: scale(.6); margin-right: 4px; }
+}
+@media(prefers-reduced-motion:reduce) { button { transition: none; } }
+.confirm .panel-heading button{width:44px;min-width:44px;flex:0 0 44px;margin:0}
+.panel-heading h2{min-width:0}

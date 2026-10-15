@@ -8,6 +8,7 @@ import Feedback from './components/Feedback'
 import Account from './components/Online'
 import LeaderboardPage from './components/LeaderboardPage'
 import AboutCredits, { SlangCredit } from './components/AboutCredits'
+import GameModeArt from './components/GameModeArt'
 import { formatTime } from './time'
 import { supabase, onlineError } from './supabase'
 import useGameAccount from './useGameAccount'
@@ -291,7 +292,7 @@ export default function AssemblyEndgame() {
           ['english', 'A–Z', 'English Words', 'မြန်မာလို clue ဖတ်ပြီး အင်္ဂလိပ်စကားလုံးကို တစ်လုံးချင်း ခန့်မှန်းပါ။'],
           ['slang', 'က', 'မြန်မာ Slang', 'ပေးထားတဲ့ အဓိပ္ပာယ်ကို ကြည့်ပြီး မြန်မာဗန်းစကားကို ရိုက်ဖြေပါ။'],
           ['proverb', 'စကားပုံ', 'မြန်မာစကားပုံ', 'စကားပုံရဲ့ အစတစ်ဝက်ကို ကြည့်ပြီး ကျန်တစ်ဝက်ကို ဖြည့်ပါ။'],
-        ].map(([id, mark, label, description]) => <button className="game-mode-card" key={id} onClick={() => { setSetupMode(id); setScreen('setup') }}><span className="mode-mark" aria-hidden="true">{mark}</span><strong>{label}</strong><span>{description}</span><span className="mode-card-action">ဒီ mode ရွေးမယ် →</span></button>)}
+        ].map(([id, , label, description]) => <button className={`game-mode-card mode-card-${id}`} key={id} onClick={() => { setSetupMode(id); setScreen('setup') }}><span className="mode-card-copy"><strong>{label}</strong><span className="mode-card-description">{description}</span><span className="mode-card-action">ဒီ mode ရွေးမယ် <span aria-hidden="true">→</span></span></span><GameModeArt mode={id} /></button>)}
       </div>
       <footer className="creator-credit">Inspired by <a href="https://github.com/Jeff307-kib/End-Game" target="_blank" rel="noreferrer">Jeff307-kib (Sai Wanna Tun)</a><span>Additional development by Sann Lynn Htun</span><button className="text-button" onClick={() => openPage('about')}>About & Credits</button></footer>
     </section> : screen === 'setup' ? <section className="landing-page setup-page" aria-labelledby="setup-title">
