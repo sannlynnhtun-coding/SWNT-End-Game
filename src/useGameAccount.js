@@ -6,14 +6,15 @@ function readQueue() {
 }
 export default function useGameAccount() {
   const [session, setSession] = useState(null)
+  const [authReady, setAuthReady] = useState(false)
   const [queue, setQueue] = useState(readQueue)
   const [cloudMessage, setCloudMessage] = useState('')
   const [retry, setRetry] = useState(0)
   const round = useRef({ id: crypto.randomUUID(), userId: null })
   useEffect(() => {
     let active = true
-    supabase.auth.getSession().then(({ data }) => { if (active) setSession(data.session) }).catch(() => {})
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, value) => { if (active) setSession(value) })
+    supabase.auth.getSession().then(({ data }) => { if (active) { setSession(data.session); setAuthReady(true) } }).catch(() => { if (active) setAuthReady(true) })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, value) => { if (active) { setSession(value); setAuthReady(true) } })
     const online = () => setRetry(value => value + 1)
     window.addEventListener('online', online)
     return () => { active = false; subscription.unsubscribe(); window.removeEventListener('online', online) }
@@ -26,7 +27,7 @@ export default function useGameAccount() {
     const result = queue.find(row => row.userId === playerId)
     if (!result || !playerId) return
     let active = true
-    supabase.rpc('record_timed_game_result', { round_id: result.id, game_mode: result.mode, did_win: result.won, duration_ms: result.elapsedMs ?? null }).then(({ error }) => {
+    supabase.rpc(result.type === 'challenge' ? 'record_challenge_result' : 'record_timed_game_result', result.type === 'challenge' ? { run_id: result.id, game_mode: result.mode, correct_count: result.correct, incorrect_count: result.incorrect, skipped_count: result.skipped, question_total: result.total, duration_ms: result.elapsedMs, finish_reason: result.reason } : { round_id: result.id, game_mode: result.mode, did_win: result.won, duration_ms: result.elapsedMs ?? null }).then(({ error }) => {
       if (!active) return
       if (error) setCloudMessage(onlineError(error))
       else { setCloudMessage('Leaderboard မှာ သိမ်းပြီးပါပြီ။'); setQueue(previous => previous.filter(row => row.id !== result.id)) }
@@ -40,5 +41,10 @@ export default function useGameAccount() {
     setCloudMessage('ရလဒ် သိမ်းနေပါတယ်…')
     setQueue(previous => previous.some(row => row.id === result.id) ? previous : [...previous, result])
   }, [])
-  return { session, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud: () => setRetry(value => value + 1), pendingCloud: queue.some(row => row.userId === playerId) }
+  const saveChallengeResult = useCallback(result => {
+    if (!result.userId) return
+    setCloudMessage('ရလဒ် သိမ်းနေပါတယ်…')
+    setQueue(previous => previous.some(row => row.id === result.id) ? previous : [...previous, { ...result, type: 'challenge' }])
+  }, [])
+  return { session, authReady, saveChallengeResult, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud: () => setRetry(value => value + 1), pendingCloud: queue.some(row => row.userId === playerId) }
 }

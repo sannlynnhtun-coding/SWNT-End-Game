@@ -39,7 +39,11 @@ export function drawProverb(history = {}, previous = '') {
   let pool = proverbs.filter(item => !used.includes(item.id))
   if (!pool.length) { used = []; pool = proverbs.filter(item => item.word !== previous) }
   const selected = pool[Math.floor(Math.random() * pool.length)]
+  return { puzzle: makeProverbPuzzle(selected), history: { ...history, [key]: [...used, selected.id] } }
+}
+
+export function makeProverbPuzzle(selected) {
   const endings = new Map(proverbs.filter(item => normalizeSlang(item.suffix) !== normalizeSlang(selected.suffix) && normalizeSlang(item.prefix) !== normalizeSlang(selected.prefix)).map(item => [normalizeSlang(item.suffix), item.suffix]))
   const options = shuffle([selected.suffix, ...shuffle([...endings.values()]).slice(0, 3)])
-  return { puzzle: { ...selected, options }, history: { ...history, [key]: [...used, selected.id] } }
+  return { ...selected, options }
 }

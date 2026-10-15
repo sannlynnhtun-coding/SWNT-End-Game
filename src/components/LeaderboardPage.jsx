@@ -10,12 +10,12 @@ const groups = [
   { id: 'english', label: 'English', modes: [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']] },
 ]
 
-function PlayerRow({ row, userId }) {
+function PlayerRow({ row, userId, challenge }) {
   return <>
     <span className="leaderboard-rank">#{row.rank}</span>
     <span className="leaderboard-avatar" aria-hidden="true">{Array.from(row.display_name.trim())[0] || '?'}</span>
-    <div className="leaderboard-player"><strong>{row.display_name}{row.player_id === userId && <span className="leaderboard-you-label"> သင်</span>}</strong><span>Best streak {row.best_streak} · စကားပုံနိုင်ပွဲ {row.proverb_wins}</span></div>
-    <div className="leaderboard-score"><strong>{row.wins} <small>နိုင်ပွဲ</small></strong><span>{row.average_ms == null ? 'အချိန် မရှိသေး' : `ပျမ်းမျှ ${formatTime(row.average_ms)}`}</span></div>
+    <div className="leaderboard-player"><strong>{row.display_name}{row.player_id === userId && <span className="leaderboard-you-label"> သင်</span>}</strong><span>{challenge ? `ပြီးစီး ${row.correct + row.incorrect + row.skipped} / ${row.total} · ${row.finish_reason === 'completed' ? 'အားလုံးပြီးဆုံး' : row.finish_reason === 'lives' ? 'အသက်ကုန်' : 'ရပ်ထား'}` : `Best streak ${row.best_streak} · စကားပုံနိုင်ပွဲ ${row.proverb_wins}`}</span></div>
+    <div className="leaderboard-score"><strong>{challenge ? row.correct : row.wins} <small>{challenge ? 'ဖြေမှန်' : 'နိုင်ပွဲ'}</small></strong><span>{challenge ? `စုစုပေါင်း ${formatTime(row.elapsed_ms)}` : row.average_ms == null ? 'အချိန် မရှိသေး' : `ပျမ်းမျှ ${formatTime(row.average_ms)}`}</span></div>
   </>
 }
 
@@ -25,19 +25,20 @@ export default function LeaderboardPage({ initialMode, userId, onBack, headingRe
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
+  const challenge = mode === 'slang' || mode.startsWith('proverb-')
   useEffect(() => {
     let active = true
-    supabase.rpc('get_timed_leaderboard', { game_mode: mode }).then(({ data, error }) => {
+    supabase.rpc(challenge ? 'get_challenge_leaderboard' : 'get_timed_leaderboard', { game_mode: mode }).then(({ data, error }) => {
       if (!active) return
       if (error) { setError(onlineError(error)); setStatus('error') }
       else { setResult(data); setStatus('ready') }
     }).catch(error => { if (active) { setError(onlineError(error)); setStatus('error') } })
     return () => { active = false }
-  }, [mode, attempt])
+  }, [mode, attempt, challenge])
   const rows = result?.rows || []
   const ready = status === 'ready'
   const group = groups.find(item => item.modes.some(([id]) => id === mode)) || groups[0]
-  const personalRow = rows.find(row => row.player_id === userId)
+  const personalRow = result?.personal || rows.find(row => row.player_id === userId)
   function chooseMode(nextMode) { if (nextMode !== mode) { setMode(nextMode); setStatus('loading') } }
   return <section className="leaderboard-page" aria-labelledby="leaderboard-title">
     <header className="leaderboard-header">
@@ -49,21 +50,21 @@ export default function LeaderboardPage({ initialMode, userId, onBack, headingRe
       <div><strong>{ready ? result.total_users.toLocaleString() : '—'}</strong><span>ကစားသူ · Players</span></div>
       <div><strong>{proverbCount.toLocaleString()}</strong><span>စကားပုံ · Proverbs</span></div>
     </div>
-    <p className="leaderboard-total-wins">စကားပုံနိုင်ပွဲ စုစုပေါင်း <strong>{ready ? result.total_proverb_wins.toLocaleString() : '—'}</strong></p>
+    <p className="leaderboard-total-wins">{challenge ? 'ပွဲရှည် စကားပုံဖြေမှန် စုစုပေါင်း' : 'စကားပုံနိုင်ပွဲ စုစုပေါင်း'} <strong>{ready ? (challenge ? result.total_proverb_correct : result.total_proverb_wins).toLocaleString() : '—'}</strong></p>
     <nav className="leaderboard-filters" aria-label="Leaderboard game">
       <div className="leaderboard-games">{groups.map(item => <button key={item.id} aria-pressed={group.id === item.id} onClick={() => chooseMode(item.modes[0][0])}>{item.label}</button>)}</div>
       {group.modes.length > 1 && <div className="leaderboard-subfilters" aria-label="Game variant">{group.modes.map(([id, label]) => <button key={id} lang={group.id === 'english' ? 'en' : 'my'} aria-pressed={mode === id} onClick={() => chooseMode(id)}>{label}</button>)}</div>}
     </nav>
-    <p className="leaderboard-rule">နိုင်ပွဲတူရင် ပျမ်းမျှဖြေချိန် ပိုမြန်သူက အပေါ်ရောက်ပါမယ်။</p>
+    <p className="leaderboard-rule">{challenge ? 'အကောင်းဆုံးပွဲတစ်ပွဲရဲ့ ဖြေမှန်အရေအတွက်နဲ့ စီပါတယ်။ ဖြေမှန်တူရင် စုစုပေါင်းဖြေချိန် ပိုနည်းသူက အပေါ်ရောက်ပါမယ်။' : 'နိုင်ပွဲတူရင် ပျမ်းမျှဖြေချိန် ပိုမြန်သူက အပေါ်ရောက်ပါမယ်။'}</p>
     <div aria-busy={status === 'loading'}>
       {status === 'loading' ? <p role="status">ရလဒ်တွေ ယူနေပါတယ်…</p> : status === 'error' ? <div role="alert"><p>{error}</p><button onClick={() => { setStatus('loading'); setAttempt(value => value + 1) }}>ပြန်စမ်းမယ်</button></div> : <>
-        {userId && <section className="leaderboard-personal" aria-label="Your position"><h2>သင့်အဆင့် · Your position</h2>{personalRow ? <div className="leaderboard-personal-row"><PlayerRow row={personalRow} userId={userId} /></div> : <p>ဒီအမျိုးအစားရဲ့ Top 100 စာရင်းမှာ သင့်ရလဒ် မရှိသေးပါ။</p>}</section>}
+        {userId && <section className="leaderboard-personal" aria-label="Your position"><h2>သင့်အဆင့် · Your position</h2>{personalRow ? <div className="leaderboard-personal-row"><PlayerRow row={personalRow} userId={userId} challenge={challenge} /></div> : <p>ဒီအမျိုးအစားမှာ သင့်ရလဒ် မရှိသေးပါ။</p>}</section>}
         <div className="leaderboard-list-heading"><h2>Top 100</h2><p className="leaderboard-count">ကစားသူ {result.participants.toLocaleString()} ဦး · ပြသထားသူ {rows.length} ဦး</p></div>
-        {!rows.length ? <p>ရလဒ် မရှိသေးပါ။ ပထမဆုံး ကစားသူ ဖြစ်လိုက်ပါ!</p> : <ol className="leaderboard-players">{rows.map(row => <li key={row.player_id} className={`${row.rank <= 3 ? 'leaderboard-winner' : ''} ${row.player_id === userId ? 'leaderboard-you' : ''}`}><PlayerRow row={row} userId={userId} /></li>)}</ol>}
+        {!rows.length ? <p>ရလဒ် မရှိသေးပါ။ ပထမဆုံး ကစားသူ ဖြစ်လိုက်ပါ!</p> : <ol className="leaderboard-players">{rows.map(row => <li key={row.player_id} className={`${row.rank <= 3 ? 'leaderboard-winner' : ''} ${row.player_id === userId ? 'leaderboard-you' : ''}`}><PlayerRow row={row} userId={userId} challenge={challenge} /></li>)}</ol>}
 
       </>}
     </div>
-    <p className="leaderboard-note">ပျမ်းမျှအချိန်ကို အချိန်မှတ်ထားသော နိုင်ပွဲများမှ တွက်ထားပါတယ်။ အဟောင်းပွဲများကို ၀ စက္ကန့်လို့ မတွက်ပါ။ အချိန်လည်းတူရင် best streak နဲ့ စီပါတယ်။</p>
+    {challenge ? <p className="leaderboard-note">ပွဲရှည်ရလဒ်များကိုသာ ပြထားပါတယ်။ အရင်မေးခွန်းတစ်ခုချင်း နိုင်ပွဲတွေကို ပွဲရှည်အမှတ်အဖြစ် မပေါင်းပါ။ Pause နဲ့ အဖြေဖတ်ချိန်ကို ဖြေချိန်ထဲ မထည့်ပါ။</p> : <p className="leaderboard-note">ပျမ်းမျှအချိန်ကို အချိန်မှတ်ထားသော နိုင်ပွဲများမှ တွက်ထားပါတယ်။ အဟောင်းပွဲများကို ၀ စက္ကန့်လို့ မတွက်ပါ။ အချိန်လည်းတူရင် best streak နဲ့ စီပါတယ်။</p>}
 
   </section>
 }

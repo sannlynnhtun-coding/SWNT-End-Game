@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { languages } from './languages'
 import { categories, difficulties, drawPuzzle } from './gameData'
-import { drawSlang, isSlangAnswer, normalizeSlang } from './slangData'
-import { drawProverb, isProverbAnswer, proverbCredit } from './proverbData'
+import { drawSlang, isSlangAnswer, normalizeSlang, slangWords } from './slangData'
+import { drawProverb, isProverbAnswer, proverbCredit, proverbCount } from './proverbData'
 import Panel from './components/Panel'
 import Feedback from './components/Feedback'
 import Account from './components/Online'
 import LeaderboardPage from './components/LeaderboardPage'
 import AboutCredits, { SlangCredit } from './components/AboutCredits'
 import GameModeArt from './components/GameModeArt'
+import MyanmarChallenge from './components/MyanmarChallenge'
 import { formatTime } from './time'
 import { supabase, onlineError } from './supabase'
 import useGameAccount from './useGameAccount'
@@ -78,7 +79,7 @@ function readStats() {
 export default function AssemblyEndgame() {
   const [googleSetup, setGoogleSetup] = useState(false)
   const [panel, setPanel] = useState(null)
-  const { session, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud, pendingCloud } = useGameAccount()
+  const { session, authReady, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud, pendingCloud, saveChallengeResult } = useGameAccount()
   useEffect(() => {
     const url = new URL(window.location.href)
     if (session && url.searchParams.get('login') === 'google') {
@@ -229,6 +230,15 @@ export default function AssemblyEndgame() {
   }, [over, won, stats, statsKey, saveOnlineResult, startedAt])
 
   function newGame(nextCategory = category, nextDifficulty = difficulty, nextMode = mode, nextPlay = proverbPlay, onlinePlayerId) {
+    if (nextMode === 'slang' || nextMode === 'proverb') {
+      const checkpointKey = `assembly-challenge-v1:${nextMode === 'slang' ? 'slang' : `proverb-${nextPlay}`}`
+      if (readStored(checkpointKey).phase === 'finished') {
+        try { localStorage.removeItem(checkpointKey) } catch { /* A new run can still start in memory. */ }
+      }
+      setMode(nextMode); setProverbPlay(nextPlay); setScreen('myanmar-game'); setPanel(null); setPendingSettings(null); setGoogleSetup(false)
+      setStartedAt(null); setSurrendered(false); setWrongAnswers([]); setSlangSolved(false); setGuessed([])
+      return
+    }
     window.scrollTo(0, 0)
     setStartedAt(performance.now()); setElapsedMs(0)
     const nextStatsKey = nextMode === 'proverb' ? `proverb-${nextPlay}` : nextMode === 'slang' ? 'slang' : nextDifficulty
@@ -281,14 +291,15 @@ export default function AssemblyEndgame() {
     <header className="topbar">
       <a className="brand" href="/" aria-label="Home · Choose game" onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); window.history.pushState({}, '', '/'); leaderboardReturn.current = 'landing'; setSetupMode(null); setScreen('landing') } }}><span className="brand-mark">A_</span><span>ASSEMBLY<span className="brand-sub">ENDGAME / WORD RESCUE</span></span></a>
       <div className="header-controls">
-        <a className="header-icon" href="/leaderboard" aria-label="Leaderboard" title="Leaderboard" aria-current={screen === 'leaderboard' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('leaderboard') } }}><BarChartIcon width={24} height={24} aria-hidden="true" /></a>
+        <a className="header-icon" href="/leaderboard" aria-label="Leaderboard" title="Leaderboard" aria-current={screen === 'myanmar-game' ? authReady ? <MyanmarChallenge key={statsKey} mode={statsKey} userId={session?.user.id || null} blocked={Boolean(panel)} onExit={() => { setSetupMode(null); setScreen('landing') }} saveResult={saveChallengeResult} cloudMessage={cloudMessage} pendingCloud={pendingCloud} retryCloud={retryCloud} /> : <p role="status">ပွဲကို ပြင်ဆင်နေပါတယ်…</p> : screen === 'leaderboard' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('leaderboard') } }}><BarChartIcon width={24} height={24} aria-hidden="true" /></a>
         <a className="header-icon" href="/about" aria-label="About & Credits" title="About & Credits" aria-current={screen === 'about' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('about') } }}><InfoCircledIcon width={24} height={24} aria-hidden="true" /></a>
         <button className="header-sound" aria-label={sound ? 'အသံ ပိတ်မယ်' : 'အသံ ဖွင့်မယ်'} title={sound ? 'အသံ ပိတ်မယ်' : 'အသံ ဖွင့်မယ်'} aria-pressed={sound} onClick={() => setSound(!sound)}>{sound ? <SpeakerLoudIcon width={24} height={24} aria-hidden="true" /> : <SpeakerOffIcon width={24} height={24} aria-hidden="true" />}</button>
         <HeaderAccount user={session?.user} onAccount={() => setPanel('account')} onFeedback={() => setPanel('feedback')} />
       </div>
     </header>
-    {screen === 'leaderboard' ? <LeaderboardPage initialMode={statsKey} userId={session?.user.id} onBack={closePage} headingRef={screenTitle} /> : screen === 'about' ? <section className="about-page" aria-labelledby="about-title"><button className="setup-back" onClick={closePage}>← နောက်သို့ / Back</button><h1 id="about-title" ref={screenTitle} tabIndex={-1}>About & Credits</h1><AboutCredits /></section> : screen === 'landing' ? <section className="landing-page" aria-labelledby="landing-title">
+    {screen === 'myanmar-game' ? authReady ? <MyanmarChallenge key={statsKey} mode={statsKey} userId={session?.user.id || null} blocked={Boolean(panel)} onExit={() => { setSetupMode(null); setScreen('landing') }} saveResult={saveChallengeResult} cloudMessage={cloudMessage} pendingCloud={pendingCloud} retryCloud={retryCloud} /> : <p role="status">ပွဲကို ပြင်ဆင်နေပါတယ်…</p> : screen === 'leaderboard' ? <LeaderboardPage initialMode={statsKey} userId={session?.user.id} onBack={closePage} headingRef={screenTitle} /> : screen === 'about' ? <section className="about-page" aria-labelledby="about-title"><button className="setup-back" onClick={closePage}>← နောက်သို့ / Back</button><h1 id="about-title" ref={screenTitle} tabIndex={-1}>About & Credits</h1><AboutCredits /></section> : screen === 'landing' ? <section className="landing-page" aria-labelledby="landing-title">
       <div className="landing-intro"><span className="eyebrow">ASSEMBLY / WORD RESCUE</span><h1 id="landing-title" ref={screenTitle} tabIndex={-1}>ဒီနေ့ ဘာကစားမလဲ?</h1><p>ကစားချင်တဲ့ mode ကို ရွေးပြီး စတင်လိုက်ပါ။</p></div>
+      <div className="challenge-resume-links">{[['slang', 'မြန်မာ Slang'], ['proverb-choice', 'စကားပုံ · ရွေးဖြေ'], ['proverb-input', 'စကားပုံ · ရိုက်ဖြေ']].filter(([id]) => { const saved = readStored(`assembly-challenge-v1:${id}`); return saved.id && saved.phase !== 'finished' && saved.userId === (session?.user.id || null) }).map(([id, label]) => <button key={id} onClick={() => newGame(category, difficulty, id === 'slang' ? 'slang' : 'proverb', id === 'proverb-input' ? 'input' : 'choice')}>{label} · ပြန်ဆက်မယ် →</button>)}</div>
       <div className="game-mode-cards" aria-label="Game mode">
         {[
           ['english', 'A–Z', 'English Words', 'မြန်မာလို clue ဖတ်ပြီး အင်္ဂလိပ်စကားလုံးကို တစ်လုံးချင်း ခန့်မှန်းပါ။'],
@@ -302,7 +313,7 @@ export default function AssemblyEndgame() {
       <form id="game-setup" className="game-setup" onSubmit={event => { event.preventDefault(); changeSettings(setupCategory, setupDifficulty, setupMode, setupPlay); if (setupCategory === category && setupDifficulty === difficulty && setupMode === mode && setupPlay === proverbPlay) newGame(setupCategory, setupDifficulty, setupMode, setupPlay) }}>
         <h1 id="setup-title" ref={screenTitle} tabIndex={-1}>{setupMode === 'english' ? 'English Words' : setupMode === 'slang' ? 'မြန်မာ Slang' : 'မြန်မာစကားပုံ'} ကစားဖို့ ပြင်ဆင်မယ်</h1>
         {setupMode === 'english' ? <><label className="category-label" htmlFor="setup-category">အမျိုးအစား</label><select id="setup-category" value={setupCategory} onChange={event => setSetupCategory(event.target.value)}>{categories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><fieldset className="difficulty-picker"><legend>အခက်အခဲအဆင့်</legend><div className="difficulty-options">{difficulties.map(item => <button type="button" key={item.id} aria-pressed={setupDifficulty === item.id} onClick={() => setSetupDifficulty(item.id)}>{item.name}</button>)}</div></fieldset></> : <><p>အမျိုးအစား — {setupMode === 'slang' ? 'မြန်မာဗန်းစကား' : 'မြန်မာစကားပုံ'}။ ဒီ mode မှာ အခက်အခဲအဆင့် ခွဲမထားပါ။</p>{setupMode === 'proverb' && <fieldset className="mode-picker"><legend>ဖြေနည်း</legend><div>{[['choice', 'ရွေးဖြေမယ်'], ['input', 'ရိုက်ဖြေမယ်']].map(([id, label]) => <button type="button" key={id} aria-pressed={setupPlay === id} onClick={() => setSetupPlay(id)}>{label}</button>)}</div></fieldset>}</>}
-        <p>မှားခွင့် {setupMode === 'english' ? '၈' : '၃'} ကြိမ်။ Hint အခမဲ့ တစ်ကြိမ်။ အချိန်ကန့်သတ်ချက် မရှိပါ။</p><button className="next-game" type="submit">စကစားမယ် →</button>
+        <p>{setupMode === 'english' ? 'မှားခွင့် ၈ ကြိမ်။ Hint အခမဲ့ တစ်ကြိမ်။ အချိန်ကန့်သတ်ချက် မရှိပါ။' : `မေးခွန်း ${setupMode === 'slang' ? slangWords.length : proverbCount} ခုလုံးကို တစ်ပွဲတည်း ကစားမယ်။ ပွဲတစ်ပွဲလုံးအတွက် အသက် ၃ ခု။ မှားဖြေခြင်း သို့မဟုတ် ကျော်ခြင်းတိုင်း အသက် ၁ ခု လျော့ပါမယ်။ အဖြေဖတ်ချိန်နဲ့ Pause အချိန်ကို ဖယ်ပြီး ဖြေချိန်ပဲ ရေတွက်ပါတယ်။ ဒီ browser မှာ ခဏနားပြီး ပြန်ဆက်နိုင်ပါတယ်။`}</p><button className="next-game" type="submit">စကစားမယ် →</button>
         {setupMode === 'proverb' && <p className="proverb-credit">{proverbCredit}</p>}
         {setupMode === 'slang' && <SlangCredit />}
       </form>
