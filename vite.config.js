@@ -5,8 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), VitePWA({
-    registerType: 'prompt',
-    injectRegister: 'script',
+    registerType: 'autoUpdate',
+    injectRegister: 'auto',
     includeAssets: ['icons/*.png', 'fonts/noto-sans-myanmar-OFL.txt'],
     manifest: {
       id: '/',
