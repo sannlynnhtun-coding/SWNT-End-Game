@@ -1,6 +1,8 @@
 import rows from './proverbs.json'
 import { normalizeSlang } from './slangData'
 
+export const proverbCredit = 'မြန်မာစကားပုံများကို ဆရာ ဒေါက်တာ ၀င်းသိန်း Website မှ ယူသုံးထားတာဖြစ်ပါတယ်'
+
 // Keep combining marks and stacked consonants together when no word space exists.
 const segmenter = new Intl.Segmenter('my', { granularity: 'grapheme' })
 export function splitProverb(value) {

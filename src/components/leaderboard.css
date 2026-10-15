@@ -1,0 +1,65 @@
+.leaderboard-page{padding:16px 0 40px;min-width:0}
+.leaderboard-header{display:flex;align-items:center;gap:16px;padding:8px 0 20px;border-bottom:1px solid var(--line)}
+.leaderboard-header .setup-back{margin:0;flex-shrink:0;font-size:14px}
+.leaderboard-header h1{margin:0;flex:1;font-size:30px;line-height:1.4}
+.leaderboard-trophy{width:30px;height:30px;flex-shrink:0;color:var(--mint)}
+.leaderboard-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0 8px}
+.leaderboard-totals>div{padding:16px 20px;background:#15212e;border-radius:12px;display:grid;gap:6px}
+.leaderboard-totals strong{font:700 30px system-ui,sans-serif;color:var(--mint)}
+.leaderboard-totals span{font-size:14px;line-height:1.9;color:#bdc9d6}
+.leaderboard-total-wins{display:flex;justify-content:space-between;gap:12px;color:#bdc9d6;font-size:14px;line-height:2;margin:12px 0 24px}
+.leaderboard-total-wins strong{color:#e6edf5;font-variant-numeric:tabular-nums}
+.leaderboard-games{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;background:#111a25;border-radius:12px}
+.leaderboard-games button{min-width:0;min-height:48px;border-color:transparent;background:none;font-size:16px;border-radius:8px}
+.leaderboard-games button[aria-pressed=true]{background:#293d25;color:var(--mint);border-color:#587043}
+.leaderboard-subfilters{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.leaderboard-subfilters button{min-height:44px;padding:6px 18px;border-radius:24px;font-size:14px}
+.leaderboard-rule{font-size:14px;line-height:2;color:#bdc9d6;margin:16px 0 24px}
+.leaderboard-personal{padding:16px;background:#17261e;border:1px solid #668849;border-radius:12px;margin-bottom:24px}
+.leaderboard-personal h2{font-size:14px;color:var(--mint);margin:0 0 12px;line-height:2}
+.leaderboard-personal p{font-size:14px;line-height:2;margin:0}
+.leaderboard-list-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.leaderboard-list-heading h2{font-size:18px;margin:0;white-space:nowrap}
+.leaderboard-count{color:#bdc9d6;line-height:2;font-size:13px;margin:0}
+.leaderboard-players{list-style:none;padding:0;margin:12px 0 24px}
+.leaderboard-players li,.leaderboard-personal-row{display:grid;grid-template-columns:44px 42px minmax(0,1fr) auto;align-items:center;gap:12px}
+.leaderboard-players li{padding:18px 4px;border-bottom:1px solid var(--line)}
+.leaderboard-players .leaderboard-you{background:#15221c;border-radius:10px;padding:18px 12px}
+.leaderboard-rank{font:700 20px system-ui,sans-serif;color:#bdc9d6;min-width:0}
+.leaderboard-winner .leaderboard-rank,.leaderboard-personal-row .leaderboard-rank{color:var(--mint)}
+.leaderboard-avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#293d35;color:#cdf9a8;font:700 18px system-ui,sans-serif}
+.leaderboard-player{min-width:0;display:grid;gap:4px;overflow-wrap:anywhere}
+.leaderboard-player>strong{font-size:17px;line-height:1.7}
+.leaderboard-player>span{font-size:12px;color:var(--muted);line-height:1.9}
+.leaderboard-score{display:grid;gap:4px;text-align:right}
+.leaderboard-score>strong{font:700 22px system-ui,sans-serif}
+.leaderboard-score strong small{font:13px var(--font-body);font-weight:400;color:#bdc9d6}
+.leaderboard-score>span{font-size:13px;color:#bdc9d6;line-height:1.9;font-variant-numeric:tabular-nums}
+.leaderboard-you-label{color:var(--mint);font-size:12px}
+.leaderboard-note{font-size:13px;color:var(--muted);line-height:2}
+.round-timer{font:14px system-ui,sans-serif;color:#bdc9d6;white-space:nowrap;font-variant-numeric:tabular-nums}
+#leaderboard-title:focus{outline:none}
+@media(max-width:640px){
+.leaderboard-page{padding-top:4px}
+.leaderboard-header{gap:10px;padding:8px 0 16px}
+.leaderboard-header h1{font-size:23px}
+.leaderboard-header .setup-back{font-size:13px;padding:6px 0;min-height:44px}
+.leaderboard-trophy{width:24px;height:24px}
+.leaderboard-totals{gap:10px;margin-top:16px}
+.leaderboard-totals>div{padding:14px}
+.leaderboard-totals strong{font-size:28px}
+.leaderboard-totals span{font-size:13px}
+.leaderboard-total-wins{font-size:13px;margin-bottom:18px}
+.leaderboard-games button{font-size:15px;padding:8px 4px}
+.leaderboard-rule{font-size:13px;margin:14px 0 20px}
+.leaderboard-personal{padding:14px}
+.leaderboard-players li,.leaderboard-personal-row{grid-template-columns:34px 36px minmax(0,1fr);gap:6px 10px}
+.leaderboard-avatar{width:36px;height:36px;font-size:16px}
+.leaderboard-rank{font-size:18px}
+.leaderboard-player>strong{font-size:16px}
+.leaderboard-score{grid-column:3;text-align:left;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.leaderboard-score>strong{font-size:20px}
+.leaderboard-score>span{font-size:12px}
+.leaderboard-list-heading{align-items:baseline}
+.leaderboard-count{font-size:12px}
+}

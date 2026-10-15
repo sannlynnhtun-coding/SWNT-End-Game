@@ -26,3 +26,15 @@ Rankings are casual and client-reported. See the setup document for the security
 ## Production
 
 https://swnt-end-game.vercel.app/
+
+## Credits
+
+Original creator and inspiration: **Jeff307-kib (Sai Wanna Tun)** and [Assembly: End-Game](https://github.com/Jeff307-kib/End-Game).
+
+Additional development and adaptations: **Sann Lynn Htun**, including Myanmar Slang and proverb modes, Burmese clues, categories and difficulty options, mobile layout, Google sign-in, timed leaderboard, feedback, and PWA support.
+
+Myanmar slang source: [Ban Sagar (ဗန်းစကား)](https://bansagar.com/). Clues are rewritten for the game.
+
+မြန်မာစကားပုံများကို ဆရာ ဒေါက်တာ ၀င်းသိန်း Website မှ ယူသုံးထားတာဖြစ်ပါတယ်
+
+Mobile font: Noto Sans Myanmar; license included at `public/fonts/noto-sans-myanmar-OFL.txt`.

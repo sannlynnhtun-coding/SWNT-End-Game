@@ -26,7 +26,7 @@ export default function useGameAccount() {
     const result = queue.find(row => row.userId === playerId)
     if (!result || !playerId) return
     let active = true
-    supabase.rpc('record_game_result', { round_id: result.id, game_mode: result.mode, did_win: result.won }).then(({ error }) => {
+    supabase.rpc('record_timed_game_result', { round_id: result.id, game_mode: result.mode, did_win: result.won, duration_ms: result.elapsedMs ?? null }).then(({ error }) => {
       if (!active) return
       if (error) setCloudMessage(onlineError(error))
       else { setCloudMessage('Leaderboard မှာ သိမ်းပြီးပါပြီ။'); setQueue(previous => previous.filter(row => row.id !== result.id)) }
@@ -34,9 +34,9 @@ export default function useGameAccount() {
     return () => { active = false }
   }, [queue, playerId, retry])
   const startOnlineRound = (userId = playerId) => { round.current = { id: crypto.randomUUID(), userId: userId || null } }
-  const saveOnlineResult = useCallback((mode, won) => {
+  const saveOnlineResult = useCallback((mode, won, elapsedMs) => {
     if (!round.current.userId) return
-    const result = { ...round.current, mode, won }
+    const result = { ...round.current, mode, won, elapsedMs }
     setCloudMessage('ရလဒ် သိမ်းနေပါတယ်…')
     setQueue(previous => previous.some(row => row.id === result.id) ? previous : [...previous, result])
   }, [])

@@ -1,0 +1,168 @@
+.mobile-navigation { display: none; }
+
+@font-face {
+  font-family: "Mobile Myanmar";
+  src: url('/fonts/noto-sans-myanmar.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* A reading-first phone interface. Desktop retains the existing arcade layout. */
+@media (max-width: 640px) {
+  body { min-width: 0; }
+  .arcade-shell {
+    --font-body: "Mobile Myanmar", "Myanmar Text", system-ui, sans-serif;
+    --font-arcade: system-ui, sans-serif;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.9;
+    padding: 0 16px max(20px, env(safe-area-inset-bottom));
+    gap: 16px;
+  }
+  .topbar, .landing-shell .topbar, [data-keyboard=open] .topbar {
+    position: relative;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    padding: 12px 0;
+    min-height: 68px;
+    gap: 12px;
+  }
+  .topbar > .game-nav { display: none; }
+  .brand { font-size: 14px; letter-spacing: .3px; gap: 8px; }
+  .brand-mark { display: block; font-size: 18px; padding: 4px 8px; }
+  .brand-sub { display: none; }
+  .mobile-navigation { display: block; flex-shrink: 0; }
+  .mobile-navigation summary {
+    cursor: pointer;
+    list-style: none;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 6px 16px;
+    border: 1px solid #526780;
+    border-radius: 10px;
+    font: 600 15px/1.8 system-ui, sans-serif;
+  }
+  .mobile-navigation summary::-webkit-details-marker { display: none; }
+  .mobile-navigation summary:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
+  .mobile-navigation[open] summary { border-color: var(--mint); color: var(--mint); }
+  .mobile-navigation nav {
+    position: absolute;
+    z-index: 10;
+    right: 0;
+    top: calc(100% + 4px);
+    width: min(280px, 100%);
+    padding: 8px;
+    display: grid;
+    gap: 6px;
+    border: 1px solid #526780;
+    border-radius: 12px;
+    background: #172330;
+    box-shadow: 0 12px 28px #0006;
+  }
+  .mobile-navigation button { text-align: left; min-height: 48px; font-size: 15px; padding: 10px 12px; }
+  .landing-page { padding: 8px 0 20px; }
+  .landing-intro { margin-bottom: 24px; }
+  .landing-intro .eyebrow { display: none; }
+  .landing-intro h1 { font-size: 28px; line-height: 1.7; margin: 0 0 8px; }
+  #landing-title:focus, #setup-title:focus { outline: none; }
+  .landing-intro p { font-size: 16px; color: #c7d4e1; margin: 0; }
+  .game-mode-cards { gap: 12px; }
+  .game-mode-card { padding: 20px; gap: 8px; border-radius: 14px; background: #15212e; }
+  .mode-mark { display: none; }
+  .game-mode-card strong { font-size: 22px; line-height: 1.8; }
+  .game-mode-card > span:not(.mode-mark) { font-size: 16px; line-height: 1.9; }
+  .game-mode-card .mode-card-action { padding-top: 8px; }
+  .setup-back { font-size: 15px; min-height: 44px; background: transparent; border-color: transparent; padding: 4px 0; }
+  .game-setup { padding: 20px; border-radius: 14px; margin-top: 12px; }
+  .game-setup h1 { font-size: 23px; line-height: 1.8; }
+  .game-setup p, .game-setup label, .game-setup legend { font-size: 16px; line-height: 1.9; }
+  .game-setup select { min-height: 52px; font-family: var(--font-body); }
+  .difficulty-options { display: grid; grid-template-columns: 1fr; }
+  .difficulty-options button, .mode-picker button { font-size: 16px; min-height: 50px; border-radius: 10px; }
+  .game-setup > .next-game { width: 100%; min-height: 54px; font-size: 17px; margin-top: 8px; }
+  .game-board, [data-keyboard=open] .game-board {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    gap: 14px;
+    min-height: calc(100dvh - 104px);
+  }
+  .board-top { order: 0; padding-bottom: 4px; }
+  .board-top .eyebrow, .compact-stats { font-size: 12px; letter-spacing: 0; }
+  .life-heading { order: 1; font-size: 15px; }
+  .life-heading strong { font-size: 24px; }
+  .life-bar { order: 2; gap: 6px; }
+  .life-bar span { height: 5px; }
+  .language-chips { display: none; }
+  .puzzle-space, [data-keyboard=open] .puzzle-space { order: 4; flex: 0 0 auto; min-height: 100px; padding: 16px 0; }
+  .slang-word-area, .proverb-prompt { text-align: left; }
+  .slang-word-area p, .slang-word-area p.long-proverb, [data-keyboard=open] .slang-word-area p { font-size: 24px; line-height: 2; margin: 8px 0 0; }
+  .slang-word-area .eyebrow, .puzzle-space .eyebrow { font-size: 14px; color: #c7d4e1; letter-spacing: 0; }
+  .hint-panel, [data-keyboard=open] .hint-panel { display: flex; order: 3; border: 0; border-radius: 14px; padding: 16px; background: #192938; }
+  .hint-panel p { font-size: 18px; line-height: 2; color: #f0f5fa; }
+  .hint-actions button { font-size: 14px; min-height: 44px; border-radius: 9px; }
+  .hint-actions button:disabled { display: none; }
+  .english-board .puzzle-space { order: 3; }
+  .english-board .hint-panel { order: 4; }
+  .status { order: 5; font-size: 15px; text-align: left; color: #c7d4e1; }
+  .status[data-instruction=true] { display: none; }
+  .game-board:has(.proverb-prompt) .hint-panel { order: 7; padding: 0; background: none; }
+  .game-board:has(.proverb-prompt) .hint-panel p { display: none; }
+  .game-board:has(.proverb-prompt) .surrender-action { order: 8; }
+  .keyboard, .slang-form, .proverb-options { order: 6; }
+  .surrender-action { order: 7; }
+  .surrender-button { font-size: 14px; }
+  .keyboard button { height: 48px; font-size: 16px; border-radius: 8px; }
+  .word > span { height: 48px; font-size: 23px; }
+  .slang-form > div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+  .slang-form input, [data-keyboard=open] .slang-form input { font-family: var(--font-body); font-size: 18px; min-height: 54px; padding: 12px; border-radius: 10px; }
+  .slang-form .next-game { font-size: 16px; min-height: 54px; padding: 12px 16px; border-radius: 10px; }
+  .proverb-options button { font-size: 18px; line-height: 2; min-height: 56px; padding: 14px 16px; text-align: left; border-radius: 12px; }
+  .board-footer { order: 10; margin-top: auto; padding: 14px 0 0; align-items: center; }
+  .board-footer .sound-button { font-size: 15px; min-height: 48px; border-radius: 10px; }
+  .board-footer .next-game { font-size: 16px; min-height: 54px; padding: 12px 16px; border-radius: 10px; }
+  .board-footer > span { font-size: 12px; }
+  .round-finished .puzzle-space, .round-finished .status.failed { display: none; }
+  .round-finished .status { order: 3; font-size: 16px; padding: 12px 0 0; }
+  .round-finished .game-board { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .round-finished .board-footer {
+    position: fixed;
+    z-index: 5;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+    background: #090f18;
+    border-top: 1px solid #304153;
+    box-shadow: 0 -8px 24px #090f1829;
+  }
+  .result-summary { order: 4; flex: 0 0 auto; text-align: left; align-items: stretch; background: #15212e; padding: 20px; border-radius: 14px; }
+  .result-summary > p:first-child { font-size: 25px; line-height: 1.9; color: var(--mint); }
+  .result-summary .answer-meaning { font-size: 18px; line-height: 2; color: #e0e8f0; }
+  .answer-meaning strong { font-size: 14px; color: #afbdcc; margin: 12px 0 6px; }
+  .game-setup .proverb-credit, .result-summary .proverb-credit { font-size: 13px; line-height: 2; color: #afbdcc; margin-top: 16px; }
+  .app-panel { font-family: "Mobile Myanmar", "Myanmar Text", system-ui, sans-serif; }
+  .panel-body p, .panel-body label, .panel-body button { font-size: 16px; line-height: 2; }
+  .panel-body button { min-height: 48px; }
+}
+.header-controls{display:flex;align-items:center;gap:8px;flex-shrink:0}.header-sound,.header-account{display:flex;align-items:center;justify-content:center;min-width:44px;height:44px;padding:6px;font-size:16px}.header-account.signed-in{width:44px;border-radius:50%;overflow:hidden;padding:0;background:#a9f06a;color:#192515;font-weight:700}.header-account img{width:100%;height:100%;object-fit:cover}.board-footer .next-game{margin-left:auto}
+@media(max-width:640px){.topbar,.landing-shell .topbar,[data-keyboard=open] .topbar{gap:8px}.brand{font-size:11px;gap:6px;margin-right:auto}.brand-mark{font-size:16px;padding:3px 6px}.mobile-navigation summary{font-size:13px;padding:6px 10px}.header-controls{gap:6px}.header-sound,.header-account{font-size:14px;min-width:44px}.header-account:not(.signed-in){font-size:12px;padding:4px}.header-sound{border:0;background:transparent;font-size:24px}.round-finished .board-footer{justify-content:flex-end}.round-finished .board-footer .next-game{width:100%}}
+.header-icon{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;border:1px solid transparent;border-radius:10px;color:#bdc9d6;text-decoration:none}
+.header-icon:hover,.header-icon[aria-current=page]{color:var(--mint);background:#17261e}
+.header-account-menu{position:relative}
+.account-actions{position:absolute;right:0;top:calc(100% + 12px);width:min(280px,calc(100vw - 32px));z-index:30;display:grid;gap:4px;padding:8px;background:#172330;border:1px solid #526780;border-radius:12px;box-shadow:0 12px 28px #0006}
+.account-actions button{min-height:48px;font-size:15px;text-align:left;background:none;border-color:transparent;padding:10px 12px}
+.account-actions button:hover{background:#213245}
+.account-actions p{font-size:13px;line-height:2;color:#ff9388;margin:8px;overflow-wrap:anywhere}
+.topbar{position:relative}
+.about-page{max-width:720px;width:100%;padding:24px 0 40px}
+.about-page h1{font-size:30px;margin:20px 0 28px;line-height:1.6}
+.about-page p{font-size:16px;color:#bdc9d6;line-height:2;overflow-wrap:anywhere}
+.about-page .about-credits section{padding-bottom:8px}
+#about-title:focus{outline:none}
+@media(max-width:640px){.header-controls{gap:2px}.topbar .brand{min-width:0;flex-shrink:1}.topbar .header-account{width:44px}.about-page{padding-top:8px}.about-page h1{font-size:26px}.about-page p{font-size:16px}.about-page .about-credits h3{font-size:18px}}
+@media(max-width:360px){.topbar .brand>span:last-child{display:none}}
