@@ -4,6 +4,7 @@ import { slangWords, isSlangAnswer, normalizeSlang } from '../slangData'
 import { advanceChallenge, createChallenge, restoreChallenge } from '../challenge'
 import { formatTime } from '../time'
 import Panel from './Panel'
+import { PauseIcon, PlayIcon } from '@radix-ui/react-icons'
 import { SlangCredit } from './AboutCredits'
 import './challenge.css'
 
@@ -83,6 +84,7 @@ export default function MyanmarChallenge({ mode, userId, blocked, onExit, saveRe
   function stopPrompt() { send({ type: 'pause' }); setConfirmStop(true) }
   return <section className={`challenge-page${finished || reading ? ' challenge-answer' : ''}`} aria-label={`${titles[mode]} ပွဲရှည်`}>
     <div className="challenge-heading"><h1>{titles[mode]}</h1><span className="round-timer" aria-label="စုစုပေါင်းဖြေချိန်">{formatTime(run.elapsedMs)}</span></div>
+    {!finished && <div className="challenge-session-controls">{run.phase === 'question' ? <button className="challenge-pause-button" onClick={() => send({ type: 'pause' })}><PauseIcon width={20} height={20} aria-hidden="true" />Pause · ခဏနားမယ်</button> : run.phase === 'paused' ? <button className="challenge-pause-button" onClick={() => send({ type: 'resume' })}><PlayIcon width={20} height={20} aria-hidden="true" />Resume · ပြန်ဆက်မယ်</button> : <p>အဖြေဖတ်နေချိန် — Timer ရပ်ထားပါတယ်။</p>}</div>}
     <div className="challenge-progress"><span>ပြီးစီး {answered} / {run.deck.length}</span><strong>ဖြေမှန် {run.correct}</strong><span aria-label={`အသက် ${run.lives} ခုကျန်`}>အသက် {run.lives} / 3</span></div>
     <progress max={run.deck.length} value={answered} aria-label="ပွဲတိုးတက်မှု" />
     <div className="life-bar" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }} aria-hidden="true">{[0, 1, 2].map(i => <span key={i} className={i < run.lives ? 'alive' : ''} />)}</div>
@@ -103,7 +105,7 @@ export default function MyanmarChallenge({ mode, userId, blocked, onExit, saveRe
       <div className="challenge-puzzle"><span>မေးခွန်း {run.index + 1}</span>{mode === 'slang' ? <p>{puzzle.clue}</p> : <p>{puzzle.prefix} <span className="proverb-blank">______</span></p>}{run.hintUsed && <p className="challenge-hint">အစ — {puzzle.hint}…</p>}</div>
       {mode === 'proverb-choice' ? <div className="proverb-options">{puzzle.options.map(option => <button key={option} onClick={() => answer(option)}>{option}</button>)}</div> : <form className="slang-form" onSubmit={event => { event.preventDefault(); answer(run.draft) }}><label htmlFor="challenge-answer">သင့်အဖြေ</label><div><input id="challenge-answer" value={run.draft} onChange={event => send({ type: 'draft', value: event.target.value })} onCompositionStart={() => { composing.current = true }} onCompositionEnd={() => { composing.current = false }} onKeyDown={event => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current || event.keyCode === 229)) event.preventDefault() }} lang="my" autoComplete="off" maxLength={500} placeholder="မြန်မာလို ရိုက်ပါ…" /><button className="next-game" disabled={!run.draft.trim()}>စစ်မယ်</button></div></form>}
       <p role="status">{notice}</p>
-      <div className="challenge-tools"><button disabled={run.hintUsed} onClick={() => send({ type: 'hint' })}>အစ ဖော်မယ်</button><button onClick={() => send({ type: 'answer', kind: 'skipped' })}>ကျော်မယ် (−1 အသက်)</button><button onClick={() => send({ type: 'pause' })}>ခဏနားမယ်</button><button onClick={stopPrompt}>ပွဲအဆုံးသတ်မယ်</button></div>
+      <div className="challenge-tools"><button disabled={run.hintUsed} onClick={() => send({ type: 'hint' })}>အစ ဖော်မယ်</button><button onClick={() => send({ type: 'answer', kind: 'skipped' })}>ကျော်မယ် (−1 အသက်)</button><button onClick={stopPrompt}>ပွဲအဆုံးသတ်မယ်</button></div>
     </>}
     {mode === 'slang' ? <SlangCredit /> : <p className="proverb-credit">{proverbCredit}</p>}
     {confirmStop && <Panel className="confirm" title="ပွဲအဆုံးသတ်မလား?" onClose={() => setConfirmStop(false)}><p>လက်ရှိဖြေမှန်အရေအတွက်နဲ့ ဖြေချိန်ကို သိမ်းပြီး ပွဲအဆုံးသတ်ပါမယ်။ ဒီပွဲကို ပြန်ဆက်လို့ မရတော့ပါ။</p><button onClick={() => setConfirmStop(false)}>ခဏနားထားမယ်</button><button className="next-game" onClick={() => { send({ type: 'stop' }); setConfirmStop(false) }}>အဆုံးသတ်ပြီး သိမ်းမယ်</button></Panel>}

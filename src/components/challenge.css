@@ -46,3 +46,7 @@
 .challenge-answer .challenge-actions button{font-size:13px;flex:1;min-width:0;padding:10px 8px}
 .challenge-answer .challenge-actions .next-game{flex:1.2}
 }
+.challenge-session-controls{position:sticky;top:0;z-index:4;background:#090f18;padding:12px 0;border-bottom:1px solid var(--line)}
+.challenge-session-controls .challenge-pause-button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;width:100%;margin:0;padding:10px 16px;border:1px solid #8278aa;background:#25243b;color:#e4ddff;font-size:15px;line-height:1.7}
+.challenge-session-controls p{margin:0;font-size:13px;line-height:2;color:#c2b6f6}
+.challenge-session-controls svg{flex-shrink:0}
