@@ -28,3 +28,7 @@ On 2026-10-16, both migrations were applied successfully to Assembly-End-Game (`
 ## Feedback
 
 Run `migrations/202610140002_feedback.sql` in the project's SQL Editor. Feedback requires an authenticated player (anonymous nickname accounts count), allows one submission per account per calendar day in `Asia/Rangoon`, and resets at Myanmar midnight. The unique database constraint rejects concurrent duplicates. Messages are 10–2000 characters and remain private to project administrators; no direct table access is granted to browser clients. Feedback is viewable in Supabase Table Editor > `game_feedback`.
+
+### Full-dataset challenges
+
+Migration `202610160004_challenge_runs.sql` adds `challenge_results`, `record_challenge_result`, and `get_challenge_leaderboard`. It is additive: legacy RPCs and results remain available to old clients and queued results. Apply it before deploying the challenge UI. Dataset limits are 869 proverbs and 20 Slang entries; update the RPC validation when changing those datasets. Test with `tests/challenge_runs.sql` (fixtures roll back).
