@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
 // Publishable browser credentials; database access is controlled by RLS.
-const url = import.meta.env.VITE_SUPABASE_URL || 'https://fvylqtaiwzbhfpjkrwlo.supabase.co'
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_2L3mjAKw1LnFmVF40yKAXA_Zf46ova-'
+const url = import.meta.env.VITE_SUPABASE_URL || 'https://muiwhmmcpghkazvrmafl.supabase.co'
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_6dWvBEUofrRvRa_2yumzkQ_SUMSES1i'
 async function timedFetch(input, options = {}) {
   const controller = new AbortController()
   const cancel = () => controller.abort()
