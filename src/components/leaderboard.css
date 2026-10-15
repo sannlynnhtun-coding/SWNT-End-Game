@@ -1,26 +1,26 @@
 .leaderboard-page{padding:16px 0 40px;min-width:0}
 .leaderboard-header{display:flex;align-items:center;gap:16px;padding:8px 0 20px;border-bottom:1px solid var(--line)}
-.leaderboard-header .setup-back{margin:0;flex-shrink:0;font-size:14px}
+.leaderboard-header .setup-back{display:flex;align-items:center;justify-content:center;line-height:1.5;margin:0;flex-shrink:0;font-size:14px}
 .leaderboard-header h1{margin:0;flex:1;font-size:30px;line-height:1.4}
 .leaderboard-trophy{width:30px;height:30px;flex-shrink:0;color:var(--mint)}
 .leaderboard-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0 8px}
 .leaderboard-totals>div{padding:16px 20px;background:#15212e;border-radius:12px;display:grid;gap:6px}
-.leaderboard-totals strong{font:700 30px system-ui,sans-serif;color:var(--mint)}
-.leaderboard-totals span{font-size:14px;line-height:1.9;color:#bdc9d6}
-.leaderboard-total-wins{display:flex;justify-content:space-between;gap:12px;color:#bdc9d6;font-size:14px;line-height:2;margin:12px 0 24px}
+.leaderboard-totals strong{font:700 30px/1.2 system-ui,sans-serif;color:var(--mint)}
+.leaderboard-totals span{font-size:14px;line-height:1.7;color:#bdc9d6}
+.leaderboard-total-wins{display:flex;justify-content:space-between;gap:12px;align-items:center;color:#bdc9d6;font-size:14px;line-height:1.7;margin:12px 0 20px}
 .leaderboard-total-wins strong{color:#e6edf5;font-variant-numeric:tabular-nums}
 .leaderboard-games{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;background:#111a25;border-radius:12px}
-.leaderboard-games button{min-width:0;min-height:48px;border-color:transparent;background:none;font-size:16px;border-radius:8px}
+.leaderboard-games button{display:flex;align-items:center;justify-content:center;margin:0;padding:8px 12px;line-height:1.6;min-width:0;min-height:48px;border-color:transparent;background:none;font-size:16px;border-radius:8px}
 .leaderboard-games button[aria-pressed=true]{background:#293d25;color:var(--mint);border-color:#587043}
 .leaderboard-subfilters{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-.leaderboard-subfilters button{min-height:44px;padding:6px 18px;border-radius:24px;font-size:14px}
-.leaderboard-rule{font-size:14px;line-height:2;color:#bdc9d6;margin:16px 0 24px}
+.leaderboard-subfilters button{display:flex;align-items:center;justify-content:center;margin:0;line-height:1.6;min-height:44px;padding:6px 18px;border-radius:24px;font-size:14px}
+.leaderboard-rule{font-size:14px;line-height:2;color:#bdc9d6;margin:12px 0 20px}
 .leaderboard-personal{padding:16px;background:#17261e;border:1px solid #668849;border-radius:12px;margin-bottom:24px}
-.leaderboard-personal h2{font-size:14px;color:var(--mint);margin:0 0 12px;line-height:2}
+.leaderboard-personal h2{font-size:14px;color:var(--mint);margin:0 0 8px;line-height:1.7}
 .leaderboard-personal p{font-size:14px;line-height:2;margin:0}
 .leaderboard-list-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.leaderboard-list-heading h2{font-size:18px;margin:0;white-space:nowrap}
-.leaderboard-count{color:#bdc9d6;line-height:2;font-size:13px;margin:0}
+.leaderboard-list-heading h2{font:700 18px/1.5 system-ui,sans-serif;margin:0;white-space:nowrap}
+.leaderboard-count{color:#bdc9d6;line-height:1.7;font-size:13px;margin:0}
 .leaderboard-players{list-style:none;padding:0;margin:12px 0 24px}
 .leaderboard-players li,.leaderboard-personal-row{display:grid;grid-template-columns:44px 42px minmax(0,1fr) auto;align-items:center;gap:12px}
 .leaderboard-players li{padding:18px 4px;border-bottom:1px solid var(--line)}
@@ -51,7 +51,7 @@
 .leaderboard-totals span{font-size:13px}
 .leaderboard-total-wins{font-size:13px;margin-bottom:18px}
 .leaderboard-games button{font-size:15px;padding:8px 4px}
-.leaderboard-rule{font-size:13px;margin:14px 0 20px}
+.leaderboard-rule{font-size:13px;margin:12px 0 16px}
 .leaderboard-personal{padding:14px}
 .leaderboard-players li,.leaderboard-personal-row{grid-template-columns:34px 36px minmax(0,1fr);gap:6px 10px}
 .leaderboard-avatar{width:36px;height:36px;font-size:16px}
@@ -60,6 +60,6 @@
 .leaderboard-score{grid-column:3;text-align:left;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .leaderboard-score>strong{font-size:20px}
 .leaderboard-score>span{font-size:12px}
-.leaderboard-list-heading{align-items:baseline}
+.leaderboard-list-heading{align-items:center;flex-wrap:wrap;gap:4px 12px}
 .leaderboard-count{font-size:12px}
 }
