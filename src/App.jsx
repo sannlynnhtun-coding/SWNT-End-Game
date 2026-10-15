@@ -142,7 +142,9 @@ export default function AssemblyEndgame() {
   const audio = useRef(null)
   const wrong = isMyanmar ? wrongAnswers.length : guessed.filter(letter => !puzzle.word.includes(letter)).length
   const won = isMyanmar ? slangSolved : [...puzzle.word].every(letter => guessed.includes(letter))
-  const lost = surrendered || wrong >= 8
+  const maxLives = isMyanmar ? 3 : 8
+  const remainingLives = Math.max(0, maxLives - wrong)
+  const lost = surrendered || wrong >= maxLives
   const over = won || lost
   useEffect(() => {
     if (startedAt == null || over || screen !== 'game') return
@@ -300,15 +302,15 @@ export default function AssemblyEndgame() {
       <form id="game-setup" className="game-setup" onSubmit={event => { event.preventDefault(); changeSettings(setupCategory, setupDifficulty, setupMode, setupPlay); if (setupCategory === category && setupDifficulty === difficulty && setupMode === mode && setupPlay === proverbPlay) newGame(setupCategory, setupDifficulty, setupMode, setupPlay) }}>
         <h1 id="setup-title" ref={screenTitle} tabIndex={-1}>{setupMode === 'english' ? 'English Words' : setupMode === 'slang' ? 'မြန်မာ Slang' : 'မြန်မာစကားပုံ'} ကစားဖို့ ပြင်ဆင်မယ်</h1>
         {setupMode === 'english' ? <><label className="category-label" htmlFor="setup-category">အမျိုးအစား</label><select id="setup-category" value={setupCategory} onChange={event => setSetupCategory(event.target.value)}>{categories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><fieldset className="difficulty-picker"><legend>အခက်အခဲအဆင့်</legend><div className="difficulty-options">{difficulties.map(item => <button type="button" key={item.id} aria-pressed={setupDifficulty === item.id} onClick={() => setSetupDifficulty(item.id)}>{item.name}</button>)}</div></fieldset></> : <><p>အမျိုးအစား — {setupMode === 'slang' ? 'မြန်မာဗန်းစကား' : 'မြန်မာစကားပုံ'}။ ဒီ mode မှာ အခက်အခဲအဆင့် ခွဲမထားပါ။</p>{setupMode === 'proverb' && <fieldset className="mode-picker"><legend>ဖြေနည်း</legend><div>{[['choice', 'ရွေးဖြေမယ်'], ['input', 'ရိုက်ဖြေမယ်']].map(([id, label]) => <button type="button" key={id} aria-pressed={setupPlay === id} onClick={() => setSetupPlay(id)}>{label}</button>)}</div></fieldset>}</>}
-        <p>မှားခွင့် ၈ ကြိမ်။ Hint အခမဲ့ တစ်ကြိမ်။ အချိန်ကန့်သတ်ချက် မရှိပါ။</p><button className="next-game" type="submit">စကစားမယ် →</button>
+        <p>မှားခွင့် {setupMode === 'english' ? '၈' : '၃'} ကြိမ်။ Hint အခမဲ့ တစ်ကြိမ်။ အချိန်ကန့်သတ်ချက် မရှိပါ။</p><button className="next-game" type="submit">စကစားမယ် →</button>
         {setupMode === 'proverb' && <p className="proverb-credit">{proverbCredit}</p>}
         {setupMode === 'slang' && <SlangCredit />}
       </form>
     </section> : <section className={`game-board ${isMyanmar ? 'myanmar-board' : 'english-board'}`} aria-label="Word rescue game">
       <div className="board-top"><span className="eyebrow">{isProverb ? `စကားပုံ · ${proverbPlay === 'choice' ? 'ရွေးဖြေ' : 'ရိုက်ဖြေ'}` : isSlang ? 'MYANMAR SLANG' : `${activeCategory.label} · ${activeDifficulty.name}`}</span><span className="round-timer" aria-label="ပွဲကစားချိန်">အချိန် {formatTime(elapsedMs)}</span><span className="compact-stats">Streak {record.streak} · Best {record.best}</span></div>
-      <div className="life-heading"><span>ကျန်တဲ့ မှားခွင့်</span><strong className={wrong >= 6 ? 'danger' : ''}>{8 - wrong}<span> / 8</span></strong></div>
-      <div className="life-bar" aria-label={`မှားခွင့် ${8-wrong} ကြိမ်ကျန်`}>{Array.from({length:8}, (_,index) => <span key={index} className={index < 8-wrong ? 'alive' : ''}/>)}</div>
-      <div className="language-chips">{languages.map((language,index) => <span key={language.name} className={`chip ${index < wrong ? 'lost' : ''}`} style={{'--chip-color':language.backgroundColor}}>{language.name}</span>)}</div>
+      <div className="life-heading"><span>ကျန်တဲ့ မှားခွင့်</span><strong className={remainingLives <= (isMyanmar ? 1 : 2) ? 'danger' : ''}>{remainingLives}<span> / {maxLives}</span></strong></div>
+      <div className="life-bar" style={{ gridTemplateColumns: `repeat(${maxLives}, 1fr)` }} aria-label={`မှားခွင့် ${remainingLives} ကြိမ်ကျန်`}>{Array.from({length:maxLives}, (_,index) => <span key={index} className={index < remainingLives ? 'alive' : ''}/>)}</div>
+      {!isMyanmar && <div className="language-chips">{languages.map((language,index) => <span key={language.name} className={`chip ${index < wrong ? 'lost' : ''}`} style={{'--chip-color':language.backgroundColor}}>{language.name}</span>)}</div>}
       <div className="puzzle-space">
         {isProverb ? <div className="slang-word-area proverb-prompt" lang="my"><span className="eyebrow">ကျန်တစ်ဝက်ကို ဖြည့်ပါ</span><p className={puzzle.word.length > 80 ? 'long-proverb' : ''}>{puzzle.prefix}<span className="proverb-blank">{over ? ' ' + puzzle.suffix : ' ______'}</span></p>{hintUsed && !over && <small>အစ — {puzzle.hint}…</small>}</div> : isSlang ? <div className="slang-word-area"><span className="eyebrow">မြန်မာဗန်းစကားကို ရိုက်ဖြေပါ</span><p>{over ? puzzle.word : hintUsed ? puzzle.hint + '…' : 'ဘယ်စကားလုံးလဲ?'}</p></div> : <div className="word-area"><span className="eyebrow">{puzzle.word.length} LETTERS</span><div className={'word ' + (puzzle.word.length > 10 ? 'compact' : '')} aria-label="ခန့်မှန်းရမယ့် စကားလုံး">{[...puzzle.word].map((letter,index) => <span key={index} className={guessed.includes(letter) ? 'revealed' : lost ? 'missed' : ''}>{guessed.includes(letter) || lost ? letter.toUpperCase() : <span className="blank-mark"/>}</span>)}</div></div>}
       </div>
