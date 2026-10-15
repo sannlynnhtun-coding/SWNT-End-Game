@@ -14,7 +14,7 @@ function PlayerRow({ row, userId, challenge }) {
   return <>
     <span className="leaderboard-rank">#{row.rank}</span>
     <span className="leaderboard-avatar" aria-hidden="true">{Array.from(row.display_name.trim())[0] || '?'}</span>
-    <div className="leaderboard-player"><strong>{row.display_name}{row.player_id === userId && <span className="leaderboard-you-label"> သင်</span>}</strong><span>{challenge ? `ပြီးစီး ${row.correct + row.incorrect + row.skipped} / ${row.total} · ${row.finish_reason === 'completed' ? 'အားလုံးပြီးဆုံး' : row.finish_reason === 'lives' ? 'အသက်ကုန်' : 'ရပ်ထား'}` : `Best streak ${row.best_streak} · စကားပုံနိုင်ပွဲ ${row.proverb_wins}`}</span></div>
+    <div className="leaderboard-player"><strong>{row.display_name}{row.player_id === userId && <span className="leaderboard-you-label"> သင်</span>}</strong><span>{challenge ? `ပြီးစီး ${row.correct + row.incorrect + row.skipped} / ${row.total} · ${row.finish_reason === 'completed' ? 'အားလုံးပြီးဆုံး' : row.finish_reason === 'lives' ? 'အသက်ကုန်' : row.finish_reason === 'paused' ? 'ခဏနားထား' : 'အဆုံးသတ်ထား'}` : `Best streak ${row.best_streak} · စကားပုံနိုင်ပွဲ ${row.proverb_wins}`}</span></div>
     <div className="leaderboard-score"><strong>{challenge ? row.correct : row.wins} <small>{challenge ? 'ဖြေမှန်' : 'နိုင်ပွဲ'}</small></strong><span>{challenge ? `စုစုပေါင်း ${formatTime(row.elapsed_ms)}` : row.average_ms == null ? 'အချိန် မရှိသေး' : `ပျမ်းမျှ ${formatTime(row.average_ms)}`}</span></div>
   </>
 }
@@ -64,7 +64,7 @@ export default function LeaderboardPage({ initialMode, userId, onBack, headingRe
 
       </>}
     </div>
-    {challenge ? <p className="leaderboard-note">ပွဲရှည်ရလဒ်များကိုသာ ပြထားပါတယ်။ အရင်မေးခွန်းတစ်ခုချင်း နိုင်ပွဲတွေကို ပွဲရှည်အမှတ်အဖြစ် မပေါင်းပါ။ Pause နဲ့ အဖြေဖတ်ချိန်ကို ဖြေချိန်ထဲ မထည့်ပါ။</p> : <p className="leaderboard-note">ပျမ်းမျှအချိန်ကို အချိန်မှတ်ထားသော နိုင်ပွဲများမှ တွက်ထားပါတယ်။ အဟောင်းပွဲများကို ၀ စက္ကန့်လို့ မတွက်ပါ။ အချိန်လည်းတူရင် best streak နဲ့ စီပါတယ်။</p>}
+    {challenge ? <p className="leaderboard-note">ပွဲရှည်ရလဒ်များကိုသာ ပြထားပါတယ်။ အရင်မေးခွန်းတစ်ခုချင်း နိုင်ပွဲတွေကို ပွဲရှည်အမှတ်အဖြစ် မပေါင်းပါ။ ခဏနားထားတဲ့ပွဲတွေလည်း ပါဝင်ပါတယ်။ ပြန်ဆက်ရင် မူလပွဲရလဒ်ကို update လုပ်ပါတယ်။ Pause နဲ့ အဖြေဖတ်ချိန်ကို ဖြေချိန်ထဲ မထည့်ပါ။</p> : <p className="leaderboard-note">ပျမ်းမျှအချိန်ကို အချိန်မှတ်ထားသော နိုင်ပွဲများမှ တွက်ထားပါတယ်။ အဟောင်းပွဲများကို ၀ စက္ကန့်လို့ မတွက်ပါ။ အချိန်လည်းတူရင် best streak နဲ့ စီပါတယ်။</p>}
 
   </section>
 }

@@ -55,3 +55,19 @@ test('resume validates dataset, owner and counters, and restores into paused sta
   assert.equal(restoreChallenge(run, 'slang', ['a'], 'player'), null)
   assert.equal(restoreChallenge({ ...run, lives: 9 }, 'slang', ['a', 'b'], 'player'), null)
 })
+
+import { mergeChallengeSnapshot, acknowledgeResult } from '../src/challengeOutbox.js'
+test('queued paused snapshots advance without duplicates and stale acknowledgements preserve newer results', () => {
+  const base = { id: 'run', correct: 2, incorrect: 0, skipped: 0, elapsedMs: 4000, reason: 'paused' }
+  let queue = mergeChallengeSnapshot([], base)
+  const old = queue[0]
+  queue = mergeChallengeSnapshot(queue, { ...base, correct: 5, elapsedMs: 10000 })
+  assert.equal(queue.length, 1)
+  assert.equal(acknowledgeResult(queue, old).length, 1)
+  queue = mergeChallengeSnapshot(queue, base)
+  assert.equal(queue[0].correct, 5)
+  queue = mergeChallengeSnapshot(queue, { ...base, correct: 6, elapsedMs: 12000, reason: 'stopped' })
+  queue = mergeChallengeSnapshot(queue, { ...base, correct: 7, elapsedMs: 15000 })
+  assert.equal(queue[0].reason, 'stopped')
+  assert.equal(acknowledgeResult(queue, queue[0]).length, 0)
+})

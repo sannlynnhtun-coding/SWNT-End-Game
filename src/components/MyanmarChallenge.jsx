@@ -64,8 +64,8 @@ export default function MyanmarChallenge({ mode, userId, blocked, onExit, saveRe
     if (blocked) send({ type: 'pause' })
   }, [blocked, send])
   useEffect(() => {
-    if (run.phase === 'finished') saveResult({ id: run.id, userId: run.userId, mode, correct: run.correct, incorrect: run.incorrect,
-      skipped: run.skipped, total: run.deck.length, elapsedMs: Math.max(1, run.elapsedMs), reason: run.reason })
+    if (run.phase === 'finished' || run.phase === 'paused') saveResult({ id: run.id, userId: run.userId, mode, correct: run.correct, incorrect: run.incorrect,
+      skipped: run.skipped, total: run.deck.length, elapsedMs: Math.max(1, run.elapsedMs), reason: run.phase === 'paused' ? 'paused' : run.reason })
   }, [run, mode, saveResult])
   const puzzle = useMemo(() => {
     const id = run.deck[run.index]
@@ -96,7 +96,7 @@ export default function MyanmarChallenge({ mode, userId, blocked, onExit, saveRe
       <p role="status">{run.userId ? cloudMessage : 'Leaderboard မှာ သိမ်းရန် ပွဲမစမီ account ဝင်ထားပါ။'}</p>
       {pendingCloud && <button onClick={retryCloud}>ပြန်သိမ်းမယ်</button>}
       <div className="challenge-actions"><button onClick={onExit}>Game ရွေးမယ်</button><button className="next-game" onClick={() => { dispatch({ type: 'restart' }); window.scrollTo(0, 0) }}>ပွဲအသစ် စမယ် →</button></div>
-    </> : run.phase === 'paused' ? <div className="challenge-pause"><h2>ခဏနားထားပါတယ်</h2><p>ခဏနားချိန်ကို ဖြေချိန်ထဲ မတွက်ပါ။ ဒီ browser မှာ နောက်မှ ပြန်ဆက်နိုင်ပါတယ်။</p><button className="next-game" onClick={() => send({ type: 'resume' })}>ပြန်ဆက်မယ် →</button><button onClick={stopPrompt}>ပွဲအဆုံးသတ်မယ်</button><button className="text-button" onClick={onExit}>Game ရွေးမယ်</button></div> : reading ? <>
+    </> : run.phase === 'paused' ? <div className="challenge-pause"><h2>ခဏနားထားပါတယ်</h2><p>ခဏနားချိန်ကို ဖြေချိန်ထဲ မတွက်ပါ။ ဒီ browser မှာ နောက်မှ ပြန်ဆက်နိုင်ပါတယ်။</p><button className="next-game" onClick={() => send({ type: 'resume' })}>ပြန်ဆက်မယ် →</button><button onClick={stopPrompt}>ပွဲအဆုံးသတ်မယ်</button><button className="text-button" onClick={onExit}>Game ရွေးမယ်</button><p role="status">{run.userId ? cloudMessage : 'Leaderboard မှာ သိမ်းရန် ပွဲမစမီ account ဝင်ထားပါ။'}</p>{pendingCloud && <button onClick={retryCloud}>ပြန်သိမ်းမယ်</button>}</div> : reading ? <>
       <p className={run.lastAnswer === 'correct' ? 'challenge-correct' : ''} role="status">{run.lastAnswer === 'correct' ? 'မှန်ပါတယ်!' : run.lastAnswer === 'skipped' ? 'ကျော်ထားပါတယ် · အသက် ၁ ခု လျော့သွားပါတယ်။' : 'မမှန်ပါ · အသက် ၁ ခု လျော့သွားပါတယ်။'}</p>
       <div className="challenge-explanation"><strong>{puzzle.word}</strong><h2>အဓိပ္ပာယ်</h2><p>{puzzle.meaning}</p></div>
       <p className="challenge-note">အဖြေနဲ့ အဓိပ္ပာယ်ဖတ်နေချိန်ကို timer ထဲ မတွက်ပါ။</p>

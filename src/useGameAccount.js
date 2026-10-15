@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { supabase, onlineError } from './supabase'
+import { mergeChallengeSnapshot, acknowledgeResult } from './challengeOutbox'
 
 function readQueue() {
   try { const rows = JSON.parse(localStorage.getItem('assembly-cloud-outbox-v1')); return Array.isArray(rows) ? rows.slice(-100) : [] } catch { return [] }
@@ -30,7 +31,7 @@ export default function useGameAccount() {
     supabase.rpc(result.type === 'challenge' ? 'record_challenge_result' : 'record_timed_game_result', result.type === 'challenge' ? { run_id: result.id, game_mode: result.mode, correct_count: result.correct, incorrect_count: result.incorrect, skipped_count: result.skipped, question_total: result.total, duration_ms: result.elapsedMs, finish_reason: result.reason } : { round_id: result.id, game_mode: result.mode, did_win: result.won, duration_ms: result.elapsedMs ?? null }).then(({ error }) => {
       if (!active) return
       if (error) setCloudMessage(onlineError(error))
-      else { setCloudMessage('Leaderboard မှာ သိမ်းပြီးပါပြီ။'); setQueue(previous => previous.filter(row => row.id !== result.id)) }
+      else { setCloudMessage('Leaderboard မှာ သိမ်းပြီးပါပြီ။'); setQueue(previous => acknowledgeResult(previous, result)) }
     }).catch(error => { if (active) setCloudMessage(onlineError(error)) })
     return () => { active = false }
   }, [queue, playerId, retry])
@@ -44,7 +45,7 @@ export default function useGameAccount() {
   const saveChallengeResult = useCallback(result => {
     if (!result.userId) return
     setCloudMessage('ရလဒ် သိမ်းနေပါတယ်…')
-    setQueue(previous => previous.some(row => row.id === result.id) ? previous : [...previous, { ...result, type: 'challenge' }])
+    setQueue(previous => mergeChallengeSnapshot(previous, result))
   }, [])
   return { session, authReady, saveChallengeResult, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud: () => setRetry(value => value + 1), pendingCloud: queue.some(row => row.userId === playerId) }
 }
