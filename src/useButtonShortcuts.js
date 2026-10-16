@@ -28,7 +28,7 @@ export default function useButtonShortcuts() {
       for (const button of buttons) {
         let key = button.dataset.shortcut
         if (button.closest('.keyboard')) key = button.textContent.trim().toLowerCase()
-        else if (button.matches(choices)) key = String(++number)
+        else if (!key && button.matches(choices)) key = String(++number)
         else if (button.matches('.panel-heading button, .setup-back')) key = 'Escape'
         else if (button.matches('.header-sound')) key = 'm'
         else if (button.matches('.challenge-pause-button')) key = 'p'
@@ -44,7 +44,7 @@ export default function useButtonShortcuts() {
         used.add(key)
         button.setAttribute('aria-keyshortcuts', key)
         // Letter keys and numbered answers already display their shortcuts.
-        if (!button.closest('.keyboard') && !button.querySelector('.answer-key')) {
+        if (!button.closest('.keyboard') && !button.querySelector('.answer-key, .start-shortcut-key')) {
           button.dataset.shortcutLabel = key.replace('Control', 'Ctrl').replace('Escape', 'Esc')
         }
         bindings.push({ button, key })

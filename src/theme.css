@@ -142,6 +142,21 @@ button[aria-pressed=true] { background: #253b2b; }
 @media(prefers-reduced-motion:reduce) { button { transition: none; } }
 .confirm .panel-heading button{width:44px;min-width:44px;flex:0 0 44px;margin:0}
 .panel-heading h2{min-width:0}
+.start-shortcuts-help { color: var(--muted); font: 13px/2 system-ui, sans-serif; }
+.start-shortcuts-help span { display: block; }
+.start-shortcuts-help kbd, .start-shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  padding: 1px 6px;
+  border: 1px solid #587043;
+  border-radius: 5px;
+  color: var(--mint);
+  background: #1c2a26;
+  font: 600 13px/1.6 system-ui, sans-serif;
+}
+.mode-card-action .start-shortcut-key { margin-inline: 8px; }
 .arcade-shell [data-shortcut-label]::after {
   content: attr(data-shortcut-label);
   display: inline-block;
