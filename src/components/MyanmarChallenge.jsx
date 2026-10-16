@@ -1,3 +1,4 @@
+import Lives from './Lives'
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { proverbs, makeProverbPuzzle, isProverbAnswer, proverbCredit } from '../proverbData'
 import { slangWords, isSlangAnswer, normalizeSlang } from '../slangData'
@@ -87,7 +88,7 @@ export default function MyanmarChallenge({ mode, userId, blocked, onExit, saveRe
     {!finished && <div className="challenge-session-controls">{run.phase === 'question' ? <button className="challenge-pause-button" onClick={() => send({ type: 'pause' })}><PauseIcon width={20} height={20} aria-hidden="true" />Pause · ခဏနားမယ်</button> : run.phase === 'paused' ? <button className="challenge-pause-button" onClick={() => send({ type: 'resume' })}><PlayIcon width={20} height={20} aria-hidden="true" />Resume · ပြန်ဆက်မယ်</button> : <p>အဖြေဖတ်နေချိန် — Timer ရပ်ထားပါတယ်။</p>}</div>}
     <div className="challenge-progress"><span>ပြီးစီး {answered} / {run.deck.length}</span><strong>ဖြေမှန် {run.correct}</strong><span aria-label={`အသက် ${run.lives} ခုကျန်`}>အသက် {run.lives} / 3</span></div>
     <progress max={run.deck.length} value={answered} aria-label="ပွဲတိုးတက်မှု" />
-    <div className="life-bar" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }} aria-hidden="true">{[0, 1, 2].map(i => <span key={i} className={i < run.lives ? 'alive' : ''} />)}</div>
+    <Lives remaining={run.lives} total={3} label={`အသက် ${run.lives} ခုကျန်`} />
     {finished ? <>
       <h2 role="status">{reasons[run.reason]}</h2>
       <div className="challenge-summary"><div><strong>{run.correct}</strong><span>ဖြေမှန်</span></div><div><strong>{run.incorrect}</strong><span>ဖြေမှား</span></div><div><strong>{run.skipped}</strong><span>ကျော်ထား</span></div><div><strong>{formatTime(run.elapsedMs)}</strong><span>စုစုပေါင်းဖြေချိန်</span></div></div>

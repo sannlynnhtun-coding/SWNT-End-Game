@@ -1,3 +1,4 @@
+import Lives from './components/Lives'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { languages } from './languages'
 import { categories, difficulties, drawPuzzle } from './gameData'
@@ -325,7 +326,7 @@ export default function AssemblyEndgame() {
     </section> : <section className={`game-board ${isMyanmar ? 'myanmar-board' : 'english-board'}`} aria-label="Word rescue game">
       <div className="board-top"><span className="eyebrow">{isProverb ? `စကားပုံ · ${proverbPlay === 'choice' ? 'ရွေးဖြေ' : 'ရိုက်ဖြေ'}` : isSlang ? 'MYANMAR SLANG' : `${activeCategory.label} · ${activeDifficulty.name}`}</span><span className="round-timer" aria-label="ပွဲကစားချိန်">အချိန် {formatTime(elapsedMs)}</span><span className="compact-stats">Streak {record.streak} · Best {record.best}</span></div>
       <div className="life-heading"><span>ကျန်တဲ့ မှားခွင့်</span><strong className={remainingLives <= (isMyanmar ? 1 : 2) ? 'danger' : ''}>{remainingLives}<span> / {maxLives}</span></strong></div>
-      <div className="life-bar" style={{ gridTemplateColumns: `repeat(${maxLives}, 1fr)` }} aria-label={`မှားခွင့် ${remainingLives} ကြိမ်ကျန်`}>{Array.from({length:maxLives}, (_,index) => <span key={index} className={index < remainingLives ? 'alive' : ''}/>)}</div>
+      <Lives remaining={remainingLives} total={maxLives} label={`မှားခွင့် ${remainingLives} ကြိမ်ကျန်`} />
       {!isMyanmar && <div className="language-chips">{languages.map((language,index) => <span key={language.name} className={`chip ${index < wrong ? 'lost' : ''}`} style={{'--chip-color':language.backgroundColor}}>{language.name}</span>)}</div>}
       <div className="puzzle-space">
         {isProverb ? <div className="slang-word-area proverb-prompt" lang="my"><span className="eyebrow">ကျန်တစ်ဝက်ကို ဖြည့်ပါ</span><p className={puzzle.word.length > 80 ? 'long-proverb' : ''}>{puzzle.prefix}<span className="proverb-blank">{over ? ' ' + puzzle.suffix : ' ______'}</span></p>{hintUsed && !over && <small>အစ — {puzzle.hint}…</small>}</div> : isSlang ? <div className="slang-word-area"><span className="eyebrow">မြန်မာဗန်းစကားကို ရိုက်ဖြေပါ</span><p>{over ? puzzle.word : hintUsed ? puzzle.hint + '…' : 'ဘယ်စကားလုံးလဲ?'}</p></div> : <div className="word-area"><span className="eyebrow">{puzzle.word.length} LETTERS</span><div className={'word ' + (puzzle.word.length > 10 ? 'compact' : '')} aria-label="ခန့်မှန်းရမယ့် စကားလုံး">{[...puzzle.word].map((letter,index) => <span key={index} className={guessed.includes(letter) ? 'revealed' : lost ? 'missed' : ''}>{guessed.includes(letter) || lost ? letter.toUpperCase() : <span className="blank-mark"/>}</span>)}</div></div>}

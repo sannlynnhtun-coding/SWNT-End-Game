@@ -1,0 +1,16 @@
+.life-bar.life-hearts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.life-hearts .life-heart {
+  flex: 0 0 auto;
+  color: #687587;
+}
+
+.life-hearts .life-heart.alive {
+  color: #ff9388;
+  background: transparent;
+}
