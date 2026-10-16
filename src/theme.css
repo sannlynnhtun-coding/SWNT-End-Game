@@ -142,3 +142,20 @@ button[aria-pressed=true] { background: #253b2b; }
 @media(prefers-reduced-motion:reduce) { button { transition: none; } }
 .confirm .panel-heading button{width:44px;min-width:44px;flex:0 0 44px;margin:0}
 .panel-heading h2{min-width:0}
+.arcade-shell [data-shortcut-label]::after {
+  content: attr(data-shortcut-label);
+  display: inline-block;
+  margin-inline-start: 8px;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font: 11px/1.5 system-ui, sans-serif;
+  opacity: .75;
+  white-space: nowrap;
+}
+.arcade-shell .game-mode-card[data-shortcut-label] { position: relative; }
+.arcade-shell .game-mode-card[data-shortcut-label]::after { position: absolute; top: 10px; right: 10px; }
+.arcade-shell :is(button, a):focus-visible { outline: 3px solid var(--mint, #a9ee8c); outline-offset: 3px; }
+@media (hover: none) and (pointer: coarse) {
+  .arcade-shell [data-shortcut-label]::after { display: none; }
+}

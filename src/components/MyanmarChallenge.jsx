@@ -1,10 +1,10 @@
-import Lives from './Lives'
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { proverbs, makeProverbPuzzle, isProverbAnswer, proverbCredit } from '../proverbData'
 import { slangWords, isSlangAnswer, normalizeSlang } from '../slangData'
 import { advanceChallenge, createChallenge, restoreChallenge } from '../challenge'
 import { formatTime } from '../time'
 import Panel from './Panel'
+import Lives from './Lives'
 import { PauseIcon, PlayIcon } from '@radix-ui/react-icons'
 import { SlangCredit } from './AboutCredits'
 import './challenge.css'
@@ -75,17 +75,34 @@ export default function MyanmarChallenge({ mode, userId, blocked, onExit, saveRe
   const answered = run.correct + run.incorrect + run.skipped
   const reading = run.phase === 'reading'
   const finished = run.phase === 'finished'
-  function answer(value) {
+  const answer = useCallback((value) => {
     if (!active || composing.current) return
     if (!normalizeSlang(value)) { setNotice('အဖြေကို မြန်မာလို ရိုက်ထည့်ပါ။'); return }
     const correct = mode === 'slang' ? isSlangAnswer(puzzle, value) : isProverbAnswer(puzzle, value)
     send({ type: 'answer', kind: correct ? 'correct' : 'incorrect' }); setNotice('')
-  }
+  }, [active, mode, puzzle, send])
+  useEffect(() => {
+    function onKey(event) {
+      if (blocked || confirmStop || event.repeat || event.isComposing || composing.current || event.ctrlKey || event.altKey || event.metaKey) return
+      if (event.target.isContentEditable || event.target.closest?.('input, textarea, select, [role=dialog], .header-account-menu')) return
+      if (active && mode === 'proverb-choice' && /^[1-9]$/.test(event.key)) {
+        const option = puzzle.options[Number(event.key) - 1]
+        if (option) { event.preventDefault(); answer(option) }
+      } else if (event.key.toLowerCase() === 'p' && (active || run.phase === 'paused')) {
+        event.preventDefault(); send({ type: active ? 'pause' : 'resume' })
+      } else if (event.key === 'Enter' && reading && event.target.tagName !== 'BUTTON' && event.target.tagName !== 'A') {
+        event.preventDefault(); send({ type: 'next' }); setNotice(''); window.scrollTo(0, 0)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [blocked, confirmStop, active, mode, puzzle, answer, run.phase, reading, send])
   function next() { send({ type: 'next' }); setNotice(''); window.scrollTo(0, 0) }
   function stopPrompt() { send({ type: 'pause' }); setConfirmStop(true) }
   return <section className={`challenge-page${finished || reading ? ' challenge-answer' : ''}`} aria-label={`${titles[mode]} ပွဲရှည်`}>
     <div className="challenge-heading"><h1>{titles[mode]}</h1><span className="round-timer" aria-label="စုစုပေါင်းဖြေချိန်">{formatTime(run.elapsedMs)}</span></div>
     {!finished && <div className="challenge-session-controls">{run.phase === 'question' ? <button className="challenge-pause-button" onClick={() => send({ type: 'pause' })}><PauseIcon width={20} height={20} aria-hidden="true" />Pause · ခဏနားမယ်</button> : run.phase === 'paused' ? <button className="challenge-pause-button" onClick={() => send({ type: 'resume' })}><PlayIcon width={20} height={20} aria-hidden="true" />Resume · ပြန်ဆက်မယ်</button> : <p>အဖြေဖတ်နေချိန် — Timer ရပ်ထားပါတယ်။</p>}</div>}
+    {!finished && <p className="play-controls-help">{reading ? 'Enter · နောက်မေးခွန်း / Tap Next' : mode === 'proverb-choice' ? '1–4 · ရွေးဖြေပါ / Tap an answer · P · Pause / Resume' : 'မြန်မာ keyboard နဲ့ ရိုက်ပါ · Enter / စစ်မယ် · P · Pause / Resume'}</p>}
     <div className="challenge-progress"><span>ပြီးစီး {answered} / {run.deck.length}</span><strong>ဖြေမှန် {run.correct}</strong><span aria-label={`အသက် ${run.lives} ခုကျန်`}>အသက် {run.lives} / 3</span></div>
     <progress max={run.deck.length} value={answered} aria-label="ပွဲတိုးတက်မှု" />
     <Lives remaining={run.lives} total={3} label={`အသက် ${run.lives} ခုကျန်`} />
@@ -104,7 +121,7 @@ export default function MyanmarChallenge({ mode, userId, blocked, onExit, saveRe
       <div className="challenge-actions"><button onClick={stopPrompt}>ပွဲအဆုံးသတ်မယ်</button><button className="next-game" onClick={next}>နောက်မေးခွန်း →</button></div>
     </> : <>
       <div className="challenge-puzzle"><span>မေးခွန်း {run.index + 1}</span>{mode === 'slang' ? <p>{puzzle.clue}</p> : <p>{puzzle.prefix} <span className="proverb-blank">______</span></p>}{run.hintUsed && <p className="challenge-hint">အစ — {puzzle.hint}…</p>}</div>
-      {mode === 'proverb-choice' ? <div className="proverb-options">{puzzle.options.map(option => <button key={option} onClick={() => answer(option)}>{option}</button>)}</div> : <form className="slang-form" onSubmit={event => { event.preventDefault(); answer(run.draft) }}><label htmlFor="challenge-answer">သင့်အဖြေ</label><div><input id="challenge-answer" value={run.draft} onChange={event => send({ type: 'draft', value: event.target.value })} onCompositionStart={() => { composing.current = true }} onCompositionEnd={() => { composing.current = false }} onKeyDown={event => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current || event.keyCode === 229)) event.preventDefault() }} lang="my" autoComplete="off" maxLength={500} placeholder="မြန်မာလို ရိုက်ပါ…" /><button className="next-game" disabled={!run.draft.trim()}>စစ်မယ်</button></div></form>}
+      {mode === 'proverb-choice' ? <div className="proverb-options" role="group" aria-label="Choose an answer">{puzzle.options.map((option, index) => <button key={option} aria-keyshortcuts={String(index + 1)} onClick={() => answer(option)}><kbd className="answer-key">{index + 1}</kbd> {option}</button>)}</div> : <form className="slang-form" onSubmit={event => { event.preventDefault(); answer(run.draft) }}><label htmlFor="challenge-answer">သင့်အဖြေ</label><div><input id="challenge-answer" value={run.draft} onChange={event => send({ type: 'draft', value: event.target.value })} onCompositionStart={() => { composing.current = true }} onCompositionEnd={() => { composing.current = false }} onKeyDown={event => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current || event.keyCode === 229)) event.preventDefault() }} lang="my" enterKeyHint="done" autoComplete="off" maxLength={500} placeholder="မြန်မာလို ရိုက်ပါ…" /><button className="next-game" disabled={!run.draft.trim()}>စစ်မယ်</button></div></form>}
       <p role="status">{notice}</p>
       <div className="challenge-tools"><button disabled={run.hintUsed} onClick={() => send({ type: 'hint' })}>အစ ဖော်မယ်</button><button onClick={() => send({ type: 'answer', kind: 'skipped' })}>ကျော်မယ် (−1 အသက်)</button><button onClick={stopPrompt}>ပွဲအဆုံးသတ်မယ်</button></div>
     </>}

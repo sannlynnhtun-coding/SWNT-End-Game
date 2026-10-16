@@ -1,10 +1,10 @@
-import Lives from './components/Lives'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { languages } from './languages'
 import { categories, difficulties, drawPuzzle } from './gameData'
 import { drawSlang, isSlangAnswer, normalizeSlang, slangWords } from './slangData'
 import { drawProverb, isProverbAnswer, proverbCredit, proverbCount } from './proverbData'
 import Panel from './components/Panel'
+import useButtonShortcuts from './useButtonShortcuts'
 import Feedback from './components/Feedback'
 import Account from './components/Online'
 import LeaderboardPage from './components/LeaderboardPage'
@@ -12,6 +12,7 @@ import PlayerProfile from './components/PlayerProfile'
 import AboutCredits, { SlangCredit } from './components/AboutCredits'
 import GameModeArt from './components/GameModeArt'
 import MyanmarChallenge from './components/MyanmarChallenge'
+import Lives from './components/Lives'
 import { formatTime } from './time'
 import { supabase, onlineError } from './supabase'
 import useGameAccount from './useGameAccount'
@@ -80,6 +81,7 @@ function readStats() {
   }))
 }
 export default function AssemblyEndgame() {
+  useButtonShortcuts()
   const [googleSetup, setGoogleSetup] = useState(false)
   const [panel, setPanel] = useState(null)
   const { session, authReady, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud, pendingCloud, saveChallengeResult } = useGameAccount()
@@ -215,14 +217,14 @@ export default function AssemblyEndgame() {
 
   useEffect(() => {
     function onKey(event) {
-      if (panel) return
-      if (pendingSettings) return
+      if (panel || pendingSettings || screen !== 'game' || over) return
+      if (event.repeat || event.target.isContentEditable) return
       if (isMyanmar || event.isComposing || event.ctrlKey || event.altKey || event.metaKey || /^(INPUT|SELECT|TEXTAREA)$/.test(event.target.tagName)) return
       if (/^[a-z]$/i.test(event.key)) { event.preventDefault(); guess(event.key.toLowerCase()) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [guess, pendingSettings, isMyanmar, panel])
+  }, [guess, pendingSettings, isMyanmar, panel, screen, over])
 
   useEffect(() => {
     if (!over || scored.current) return
@@ -334,7 +336,7 @@ export default function AssemblyEndgame() {
       <div className={'status ' + (won ? 'won' : lost ? 'failed' : '')} data-instruction={!over && isMyanmar && (message === 'ပြထားတဲ့တစ်ဝက်ကို ကြည့်ပြီး ကျန်တစ်ဝက်ကို ဖြည့်ပါ။' || message === 'မြန်မာ keyboard နဲ့ အဖြေအပြည့်ရိုက်ပါ။')} role="status" aria-live="polite">{won ? 'ကယ်တင်နိုင်ပြီ! နောက်တစ်ပွဲ ဆက်ကစားမယ်။' : lost ? `အဖြေ — ${puzzle.word}` : message}</div>
       {!over && <div className="hint-panel"><p>{isProverb ? 'တစ်ဝက်ကို hint အဖြစ် ပြထားပါတယ်။' : clueShown ? puzzle.clue : 'ခက်နေပြီလား? Clue ကို အခမဲ့ ကြည့်ပါ။'}</p><div className="hint-actions">{!isProverb && <button disabled={clueShown} onClick={() => setClueShown(true)}>Clue ကြည့်မယ်</button>}<button disabled={hintUsed} onClick={revealLetter}>{hintUsed ? 'Hint သုံးပြီး' : isMyanmar ? 'အစ ဖော်မယ်' : 'Letter ဖော်မယ်'}</button></div></div>}
       {!over && <div className="surrender-action"><button className="text-button surrender-button" onClick={() => setPanel('surrender')}>အဖြေကြည့်ပြီး အရှုံးပေးမယ်</button></div>}
-      {!over && (isProverb && proverbPlay === 'choice' ? <div className="proverb-options" aria-label="ကျန်တစ်ဝက် ရွေးပါ">{puzzle.options.map(option => <button key={option} disabled={wrongAnswers.includes(normalizeSlang(option))} className={wrongAnswers.includes(normalizeSlang(option)) ? 'incorrect' : ''} onClick={() => checkAnswer(option)}>{option}</button>)}</div> : isMyanmar ? <form className="slang-form" onSubmit={submitAnswer}><label className="sr-only" htmlFor="slang-answer">သင့်အဖြေ</label><div><input id="slang-answer" ref={answerInput} value={answer} onChange={event => setAnswer(event.target.value)} onCompositionStart={() => { composing.current = true }} onCompositionEnd={() => { composing.current = false }} onKeyDown={event => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current || event.keyCode === 229)) event.preventDefault() }} placeholder={isProverb ? 'ကျန်တစ်ဝက်ကို ရိုက်ပါ…' : 'မြန်မာလို ရိုက်ပါ…'} lang="my" autoComplete="off" spellCheck={false} maxLength={500}/><button className="next-game" type="submit" disabled={!answer.trim()}>စစ်မယ်</button></div></form> : <div className="keyboard" aria-label="စာလုံးရွေးပါ">{['qwertyuiop','asdfghjkl','zxcvbnm'].map(row => <div className="keyboard-row" key={row}>{[...row].map(letter => <button key={letter} disabled={guessed.includes(letter)} className={guessed.includes(letter) ? puzzle.word.includes(letter) ? 'correct' : 'wrong' : ''} aria-label={`Letter ${letter.toUpperCase()}`} onClick={() => guess(letter)}>{letter.toUpperCase()}</button>)}</div>)}</div>)}
+      {!over && (isProverb && proverbPlay === 'choice' ? <div className="proverb-options" aria-label="ကျန်တစ်ဝက် ရွေးပါ">{puzzle.options.map(option => <button key={option} disabled={wrongAnswers.includes(normalizeSlang(option))} className={wrongAnswers.includes(normalizeSlang(option)) ? 'incorrect' : ''} onClick={() => checkAnswer(option)}>{option}</button>)}</div> : isMyanmar ? <form className="slang-form" onSubmit={submitAnswer}><label className="sr-only" htmlFor="slang-answer">သင့်အဖြေ</label><div><input id="slang-answer" ref={answerInput} value={answer} onChange={event => setAnswer(event.target.value)} onCompositionStart={() => { composing.current = true }} onCompositionEnd={() => { composing.current = false }} onKeyDown={event => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current || event.keyCode === 229)) event.preventDefault() }} placeholder={isProverb ? 'ကျန်တစ်ဝက်ကို ရိုက်ပါ…' : 'မြန်မာလို ရိုက်ပါ…'} lang="my" autoComplete="off" spellCheck={false} maxLength={500}/><button className="next-game" type="submit" disabled={!answer.trim()}>စစ်မယ်</button></div></form> : <div className="keyboard" role="group" aria-label="စာလုံးရွေးပါ"><p className="play-controls-help">A–Z · Type a letter or tap a key / စာလုံးကို နှိပ်ပါ</p>{['qwertyuiop','asdfghjkl','zxcvbnm'].map(row => <div className="keyboard-row" key={row}>{[...row].map(letter => <button key={letter} disabled={guessed.includes(letter)} className={guessed.includes(letter) ? puzzle.word.includes(letter) ? 'correct' : 'wrong' : ''} aria-label={`Letter ${letter.toUpperCase()}`} onClick={() => guess(letter)}>{letter.toUpperCase()}</button>)}</div>)}</div>)}
       {over && <div className="result-summary"><p>{puzzle.word}</p><p className="answer-meaning"><strong>အဓိပ္ပာယ်</strong>{puzzle.meaning}</p>{isProverb && <p className="proverb-credit">{proverbCredit}</p>}{isSlang && <SlangCredit />}{cloudMessage && <small role="status">{cloudMessage}{pendingCloud && <button className="text-button" onClick={retryCloud}>ပြန်သိမ်းမယ်</button>}</small>}</div>}
       {over && <footer className="board-footer"><button className="next-game" onClick={() => newGame()}>နောက်တစ်ပွဲ ကစားမယ် →</button></footer>}
     </section>}
