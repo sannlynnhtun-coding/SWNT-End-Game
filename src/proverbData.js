@@ -1,18 +1,11 @@
 import rows from './proverbs.json'
 import { normalizeSlang } from './slangData'
+import { splitProverb } from './proverbSplit.js'
+export { splitProverb } from './proverbSplit.js'
 
 export const proverbCredit = 'မြန်မာစကားပုံများကို ဆရာ ဒေါက်တာ ၀င်းသိန်း Website မှ ယူသုံးထားတာဖြစ်ပါတယ်'
 
-// Keep combining marks and stacked consonants together when no word space exists.
 const segmenter = new Intl.Segmenter('my', { granularity: 'grapheme' })
-export function splitProverb(value) {
-  const word = value.trim().replace(/\s+/g, ' ')
-  const units = [...segmenter.segment(word)].map(item => item.segment)
-  const midpoint = units.length / 2
-  const spaces = units.flatMap((unit, index) => unit === ' ' && index >= units.length * .3 && index <= units.length * .7 ? [index] : [])
-  const cut = spaces.length ? spaces.reduce((a, b) => Math.abs(a - midpoint) <= Math.abs(b - midpoint) ? a : b) : Math.ceil(midpoint)
-  return { word, prefix: units.slice(0, cut).join(''), suffix: units.slice(cut).join('').trim() }
-}
 const seen = new Set()
 export const proverbs = rows.flatMap(row => {
   const parts = splitProverb(row.ProverbName)
