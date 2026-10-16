@@ -148,7 +148,7 @@ export default function AssemblyEndgame() {
   const audio = useRef(null)
   const wrong = isMyanmar ? wrongAnswers.length : guessed.filter(letter => !puzzle.word.includes(letter)).length
   const won = isMyanmar ? slangSolved : [...puzzle.word].every(letter => guessed.includes(letter))
-  const maxLives = isMyanmar ? 3 : 8
+  const maxLives = isMyanmar ? 3 : languages.length
   const remainingLives = Math.max(0, maxLives - wrong)
   const lost = surrendered || wrong >= maxLives
   const over = won || lost
