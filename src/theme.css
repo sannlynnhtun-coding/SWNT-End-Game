@@ -174,3 +174,35 @@ button[aria-pressed=true] { background: #253b2b; }
 @media (hover: none) and (pointer: coarse) {
   .arcade-shell [data-shortcut-label]::after { display: none; }
 }
+.topbar [data-shortcut-label]:not(.account-actions button) { position: relative; }
+.arcade-shell .topbar [data-shortcut-label]:not(.account-actions button)::after {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 5px 8px;
+  background: #111a25;
+  color: #e6edf5;
+  border-color: var(--line);
+  box-shadow: 0 4px 12px #0006;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.arcade-shell .topbar .brand[data-shortcut-label]::after { left: 0; right: auto; }
+.arcade-shell .topbar [data-shortcut-label]:is(:hover, :focus-visible):not(.account-actions button)::after {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+}
+.topbar .header-account.signed-in { overflow: visible; }
+.topbar .header-account img { border-radius: 50%; }
+.shortcut-help-button { font: 700 20px/1 system-ui, sans-serif; background: transparent; }
+.shortcut-help { width: min(640px, calc(100vw - 24px)); }
+.shortcut-list { margin: 16px 0 24px; }
+.shortcut-list > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.shortcut-list dt { min-width: 0; overflow-wrap: anywhere; }
+.shortcut-list dd { margin: 0; flex-shrink: 0; }
+.shortcut-list kbd { font: 12px/1.6 system-ui, sans-serif; border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; white-space: nowrap; }
+.shortcut-list small { color: var(--muted); }

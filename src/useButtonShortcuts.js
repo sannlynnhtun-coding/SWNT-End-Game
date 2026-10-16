@@ -68,7 +68,7 @@ export default function useButtonShortcuts() {
         const parts = key.toLowerCase().split('+')
         return parts.at(-1) === event.key.toLowerCase()
           && parts.includes('alt') === event.altKey
-          && parts.includes('shift') === event.shiftKey
+          && (key === '?' || parts.includes('shift') === event.shiftKey)
           && parts.includes('control') === event.ctrlKey && !event.metaKey
       })
       if (!binding) {

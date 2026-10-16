@@ -5,6 +5,7 @@ import { drawSlang, isSlangAnswer, normalizeSlang, slangWords } from './slangDat
 import { drawProverb, isProverbAnswer, proverbCredit, proverbCount } from './proverbData'
 import Panel from './components/Panel'
 import useButtonShortcuts from './useButtonShortcuts'
+import ShortcutHelp from './components/ShortcutHelp'
 import Feedback from './components/Feedback'
 import Account from './components/Online'
 import LeaderboardPage from './components/LeaderboardPage'
@@ -299,6 +300,7 @@ export default function AssemblyEndgame() {
     <header className="topbar">
       <a className="brand" href="/" aria-label="Home · Choose game" onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); window.history.pushState({}, '', '/'); leaderboardReturn.current = 'landing'; setSetupMode(null); setScreen('landing') } }}><span className="brand-mark">A_</span><span>ASSEMBLY<span className="brand-sub">ENDGAME / WORD RESCUE</span></span></a>
       <div className="header-controls">
+        <ShortcutHelp />
         <a className="header-icon" href="/leaderboard" aria-label="Leaderboard" title="Leaderboard" aria-current={screen === 'leaderboard' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('leaderboard') } }}><BarChartIcon width={24} height={24} aria-hidden="true" /></a>
         <a className="header-icon" href="/about" aria-label="About & Credits" title="About & Credits" aria-current={screen === 'about' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('about') } }}><InfoCircledIcon width={24} height={24} aria-hidden="true" /></a>
         <button className="header-sound" aria-label={sound ? 'အသံ ပိတ်မယ်' : 'အသံ ဖွင့်မယ်'} title={sound ? 'အသံ ပိတ်မယ်' : 'အသံ ဖွင့်မယ်'} aria-pressed={sound} onClick={() => setSound(!sound)}>{sound ? <SpeakerLoudIcon width={24} height={24} aria-hidden="true" /> : <SpeakerOffIcon width={24} height={24} aria-hidden="true" />}</button>
