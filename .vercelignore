@@ -1,0 +1,7 @@
+# Local scan artifacts and agent state are not deployment inputs.
+output/
+.claude/
+.claude-flow/
+.swarm/
+.env
+.env.*
