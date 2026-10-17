@@ -1,4 +1,10 @@
 // Only known, actionable errors reach the UI. Backend diagnostics stay private.
+export function retryDelaySeconds(error) {
+  const match = /(?:request this after|try again (?:in|after))\s+(\d+)\s*seconds?/i.exec(error?.message || '')
+  const seconds = Number(match?.[1])
+  return Number.isSafeInteger(seconds) && seconds > 0 ? seconds : 0
+}
+
 export function onlineError(error) {
   if (error?.code === 'manual_linking_disabled') return 'နာမည်နဲ့ကစားသူကို Google နဲ့ချိတ်ရန် Server ပြင်ဆင်နေဆဲပါ။'
   if (error?.code === 'anonymous_provider_disabled' || /anonymous.*disabled/i.test(error?.message || '')) return 'နာမည်နဲ့ ကစားရန် Server ပြင်ဆင်နေဆဲပါ။ Email account နဲ့ ဝင်နိုင်ပါတယ်။'

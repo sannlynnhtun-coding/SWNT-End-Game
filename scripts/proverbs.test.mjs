@@ -16,13 +16,27 @@ test('reported prompts preserve complete Myanmar words', () => {
 
 test('every source proverb has a complete answer and a source or reviewed word boundary', () => {
   for (const row of rows) {
-    const { word, prefix, suffix } = splitProverb(row.ProverbName)
+    const { word, prefix, suffix, trailing } = splitProverb(row.ProverbName)
     assert.ok(prefix && suffix, `Missing split: ${word}`)
-    assert.equal((prefix + suffix).replaceAll(' ', ''), word.replaceAll(' ', ''), word)
-    if (word.includes(' ')) assert.equal(`${prefix} ${suffix}`, word)
+    const restored = [prefix, suffix, trailing].filter(Boolean).join(' ')
+    assert.equal(restored.replaceAll(' ', ''), word.replaceAll(' ', ''), word)
+    if (word.includes(' ')) assert.equal(restored, word)
     else assert.ok(unspacedProverbPrefixes.has(word), `Review new unspaced proverb: ${word}`)
     assert.ok(!/^[\p{Mark}\u1039\u103a]/u.test(suffix), word)
+    assert.notEqual(prefix.split(' ').at(-1), suffix.split(' ')[0], `Repeated answer leaked: ${word}`)
   }
+})
+
+test('reported repeated call is hidden together with its verb left visible', () => {
+  assert.deepEqual(splitProverb('သူခိုးက လူ လူ ဟစ်'), {
+    word: 'သူခိုးက လူ လူ ဟစ်', prefix: 'သူခိုးက', suffix: 'လူ လူ', trailing: 'ဟစ်',
+  })
+})
+
+test('automatic splits keep repeated expressions together', () => {
+  const parts = splitProverb('အစ လူ လူ အဆုံး')
+  assert.ok(parts.prefix.includes('လူ လူ') || parts.suffix.includes('လူ လူ'))
+  assert.equal(`${parts.prefix} ${parts.suffix}`, parts.word)
 })
 
 test('unknown unspaced entries cannot produce broken puzzles', () => {

@@ -15,8 +15,9 @@ import GameModeArt from './components/GameModeArt'
 import MyanmarChallenge from './components/MyanmarChallenge'
 import Lives from './components/Lives'
 import { formatTime } from './time'
-import { supabase, onlineError } from './supabase'
+import { onlineError } from './supabase'
 import useGameAccount from './useGameAccount'
+import useLocale from './useLocale'
 import ReactConfetti from 'react-confetti'
 import { SpeakerLoudIcon, SpeakerOffIcon, InfoCircledIcon, BarChartIcon, PersonIcon } from '@radix-ui/react-icons'
 
@@ -31,7 +32,7 @@ function AccountAvatar({ user, onClick, expanded }) {
   </button>
 }
 
-function HeaderAccount({ user, onAccount, onFeedback, onProfile }) {
+function HeaderAccount({ user, onAccount, onFeedback, onProfile, onLogout, t }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -46,21 +47,20 @@ function HeaderAccount({ user, onAccount, onFeedback, onProfile }) {
   }, [open])
   async function logout() {
     setBusy(true); setError('')
+    setOpen(false)
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      setOpen(false)
-    } catch (error) { setError(onlineError(error)) }
+      await onLogout()
+    } catch (error) { setError(onlineError(error)); setOpen(true) }
     finally { setBusy(false) }
   }
   function choose(action) { setOpen(false); action() }
   return <div className="header-account-menu" ref={root} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false) }}>
     <AccountAvatar key={user?.id || 'guest'} user={user} expanded={open} onClick={() => setOpen(!open)} />
     {open && <div id="account-actions" className="account-actions" aria-label="Account actions" onKeyDown={event => { if (event.key !== 'Escape') event.stopPropagation() }}>
-      <button onClick={() => choose(onAccount)}>{user ? 'သင့်အကောင့် · Account' : 'ဝင်မယ် · Sign in'}</button>
+      <button onClick={() => choose(onAccount)}>{user ? t('Your account', 'သင့်အကောင့်') : t('Sign in', 'ဝင်မယ်')}</button>
       <button onClick={() => choose(onFeedback)}>Feedback</button>
-      {user && <button onClick={() => choose(onProfile)}>သင့် Profile · Activity</button>}
-      {user && <button disabled={busy} onClick={logout}>{busy ? 'ခဏစောင့်ပါ…' : 'ထွက်မယ် · Logout'}</button>}
+      {user && <button onClick={() => choose(onProfile)}>{t('Your profile · Activity', 'သင့် Profile · Activity')}</button>}
+      {user && <button disabled={busy} onClick={logout}>{busy ? t('Please wait…', 'ခဏစောင့်ပါ…') : t('Logout', 'ထွက်မယ်')}</button>}
       {error && <p role="alert">{error}</p>}
     </div>}
   </div>
@@ -82,10 +82,11 @@ function readStats() {
   }))
 }
 export default function AssemblyEndgame() {
+  const { locale, setLocale, t } = useLocale()
   useButtonShortcuts()
   const [googleSetup, setGoogleSetup] = useState(false)
   const [panel, setPanel] = useState(null)
-  const { session, authReady, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud, pendingCloud, saveChallengeResult } = useGameAccount()
+  const { session, authReady, logout, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud, pendingCloud, saveChallengeResult } = useGameAccount()
   useEffect(() => {
     const url = new URL(window.location.href)
     if (session && url.searchParams.get('login') === 'google') {
@@ -260,7 +261,7 @@ export default function AssemblyEndgame() {
     setRound(nextMode === 'proverb' ? drawProverb(history, puzzle.word) : nextMode === 'slang' ? drawSlang(history, puzzle.word) : drawPuzzle(nextCategory, nextDifficulty, history, puzzle.word))
     setGuessed([]); setSurrendered(false); setAnswer(''); setWrongAnswers([]); setSlangSolved(false); composing.current = false
     setClueShown(nextMode === 'proverb' || nextMode === 'slang' || nextDifficulty === 'easy'); setHintUsed(false); setPendingSettings(null)
-    setMessage(nextMode === 'proverb' ? 'ပြထားတဲ့တစ်ဝက်ကို ကြည့်ပြီး ကျန်တစ်ဝက်ကို ဖြည့်ပါ။' : nextMode === 'slang' ? 'မြန်မာ keyboard နဲ့ အဖြေအပြည့်ရိုက်ပါ။' : 'စာလုံးတစ်လုံး ရွေးပြီး စတင်လိုက်ပါ။'); scored.current = false
+    setMessage(nextMode === 'proverb' ? 'ပြထားတဲ့တစ်ဝက်ကို ကြည့်ပြီး ကွက်လပ်ကို ဖြည့်ပါ။' : nextMode === 'slang' ? 'မြန်မာ keyboard နဲ့ အဖြေအပြည့်ရိုက်ပါ။' : 'စာလုံးတစ်လုံး ရွေးပြီး စတင်လိုက်ပါ။'); scored.current = false
   }
   function changeSettings(nextCategory, nextDifficulty, nextMode = mode, nextPlay = proverbPlay) {
     if (nextCategory === category && nextDifficulty === difficulty && nextMode === mode && nextPlay === proverbPlay) return
@@ -300,31 +301,32 @@ export default function AssemblyEndgame() {
     <header className="topbar">
       <a className="brand" href="/" aria-label="Home · Choose game" onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); window.history.pushState({}, '', '/'); leaderboardReturn.current = 'landing'; setSetupMode(null); setScreen('landing') } }}><span className="brand-mark">A_</span><span>ASSEMBLY<span className="brand-sub">ENDGAME / WORD RESCUE</span></span></a>
       <div className="header-controls">
+        <button className="header-locale" type="button" aria-label={t('Switch to Myanmar', 'Switch to English')} title={t('Switch to Myanmar', 'အင်္ဂလိပ်လို ပြောင်းမယ်')} onClick={() => setLocale(locale === 'en' ? 'my' : 'en')}><span lang="en" className={locale === 'en' ? 'locale-active' : ''}>EN</span><span aria-hidden="true">/</span><span lang="my" className={locale === 'my' ? 'locale-active' : ''}>MM</span></button>
         <ShortcutHelp />
-        <a className="header-icon" href="/leaderboard" aria-label="Leaderboard" title="Leaderboard" aria-current={screen === 'leaderboard' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('leaderboard') } }}><BarChartIcon width={24} height={24} aria-hidden="true" /></a>
-        <a className="header-icon" href="/about" aria-label="About & Credits" title="About & Credits" aria-current={screen === 'about' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('about') } }}><InfoCircledIcon width={24} height={24} aria-hidden="true" /></a>
-        <button className="header-sound" aria-label={sound ? 'အသံ ပိတ်မယ်' : 'အသံ ဖွင့်မယ်'} title={sound ? 'အသံ ပိတ်မယ်' : 'အသံ ဖွင့်မယ်'} aria-pressed={sound} onClick={() => setSound(!sound)}>{sound ? <SpeakerLoudIcon width={24} height={24} aria-hidden="true" /> : <SpeakerOffIcon width={24} height={24} aria-hidden="true" />}</button>
-        <HeaderAccount user={session?.user} onAccount={() => setPanel('account')} onFeedback={() => setPanel('feedback')} onProfile={() => openPage(`players/${session.user.id}`)} />
+        <a className="header-icon" href="/leaderboard" aria-label={t("Leaderboard", "အဆင့်စာရင်း")} title={t("Leaderboard", "အဆင့်စာရင်း")} aria-current={screen === 'leaderboard' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('leaderboard') } }}><BarChartIcon width={24} height={24} aria-hidden="true" /></a>
+        <a className="header-icon" href="/about" aria-label={t("About & Credits", "အကြောင်းနှင့် ကျေးဇူးတင်လွှာ")} title={t("About & Credits", "အကြောင်းနှင့် ကျေးဇူးတင်လွှာ")} aria-current={screen === 'about' ? 'page' : undefined} onClick={event => { if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); openPage('about') } }}><InfoCircledIcon width={24} height={24} aria-hidden="true" /></a>
+        <button className="header-sound" aria-label={sound ? t('Mute sound', 'အသံ ပိတ်မယ်') : t('Enable sound', 'အသံ ဖွင့်မယ်')} title={sound ? t('Mute sound', 'အသံ ပိတ်မယ်') : t('Enable sound', 'အသံ ဖွင့်မယ်')} aria-pressed={sound} onClick={() => setSound(!sound)}>{sound ? <SpeakerLoudIcon width={24} height={24} aria-hidden="true" /> : <SpeakerOffIcon width={24} height={24} aria-hidden="true" />}</button>
+        <HeaderAccount t={t} user={session?.user} onLogout={logout} onAccount={() => setPanel('account')} onFeedback={() => setPanel('feedback')} onProfile={() => openPage(`players/${session.user.id}`)} />
       </div>
     </header>
-    {screen === 'myanmar-game' ? authReady ? <MyanmarChallenge key={statsKey} mode={statsKey} userId={session?.user.id || null} blocked={Boolean(panel)} onExit={() => { setSetupMode(null); setScreen('landing') }} saveResult={saveChallengeResult} cloudMessage={cloudMessage} pendingCloud={pendingCloud} retryCloud={retryCloud} /> : <p role="status">ပွဲကို ပြင်ဆင်နေပါတယ်…</p> : screen === 'profile' ? <PlayerProfile key={profileId} playerId={profileId} userId={session?.user.id} onBack={closePage} headingRef={screenTitle} /> : screen === 'leaderboard' ? <LeaderboardPage initialMode={statsKey} userId={session?.user.id} onBack={closePage} headingRef={screenTitle} onProfile={id => openPage(`players/${id}`)} /> : screen === 'about' ? <section className="about-page" aria-labelledby="about-title"><button className="setup-back" onClick={closePage}>← နောက်သို့ / Back</button><h1 id="about-title" ref={screenTitle} tabIndex={-1}>About & Credits</h1><AboutCredits /></section> : screen === 'landing' ? <section className="landing-page" aria-labelledby="landing-title">
-      <div className="landing-intro"><span className="eyebrow">ASSEMBLY / WORD RESCUE</span><h1 id="landing-title" ref={screenTitle} tabIndex={-1}>ဒီနေ့ ဘာကစားမလဲ?</h1><p>ကစားချင်တဲ့ mode ကို ရွေးပြီး စတင်လိုက်ပါ။</p><p className="start-shortcuts-help"><kbd>1</kbd> English · <kbd>2</kbd> Slang · <kbd>3</kbd> စကားပုံ <span>Tab နဲ့ ရွှေ့ပြီး Enter နဲ့လည်း ရွေးနိုင်ပါတယ်။</span></p></div>
-      <div className="challenge-resume-links">{[['slang', 'မြန်မာ Slang'], ['proverb-choice', 'စကားပုံ · ရွေးဖြေ'], ['proverb-input', 'စကားပုံ · ရိုက်ဖြေ']].filter(([id]) => { const saved = readStored(`assembly-challenge-v1:${id}`); return saved.id && saved.phase !== 'finished' && saved.userId === (session?.user.id || null) }).map(([id, label]) => <button key={id} data-shortcut={String(4 + ['slang', 'proverb-choice', 'proverb-input'].indexOf(id))} onClick={() => newGame(category, difficulty, id === 'slang' ? 'slang' : 'proverb', id === 'proverb-input' ? 'input' : 'choice')}>{label} · ပြန်ဆက်မယ် →</button>)}</div>
+    {screen === 'myanmar-game' ? authReady ? <MyanmarChallenge t={t} key={statsKey} mode={statsKey} userId={session?.user.id || null} blocked={Boolean(panel)} onExit={() => { setSetupMode(null); setScreen('landing') }} saveResult={saveChallengeResult} cloudMessage={cloudMessage} pendingCloud={pendingCloud} retryCloud={retryCloud} /> : <p role="status">ပွဲကို ပြင်ဆင်နေပါတယ်…</p> : screen === 'profile' ? <PlayerProfile key={profileId} playerId={profileId} userId={session?.user.id} onBack={closePage} headingRef={screenTitle} /> : screen === 'leaderboard' ? <LeaderboardPage initialMode={statsKey} userId={session?.user.id} onBack={closePage} headingRef={screenTitle} onProfile={id => openPage(`players/${id}`)} /> : screen === 'about' ? <section className="about-page" aria-labelledby="about-title"><button className="setup-back" onClick={closePage}>{t("← Back", "← နောက်သို့")}</button><h1 id="about-title" ref={screenTitle} tabIndex={-1}>About & Credits</h1><AboutCredits /></section> : screen === 'landing' ? <section className="landing-page" aria-labelledby="landing-title">
+      <div className="landing-intro"><span className="eyebrow">ASSEMBLY / WORD RESCUE</span><h1 id="landing-title" ref={screenTitle} tabIndex={-1}>{t("What will you play today?", "ဒီနေ့ ဘာကစားမလဲ?")}</h1><p>{t("Choose the mode you want to play and start.", "ကစားချင်တဲ့ mode ကို ရွေးပြီး စတင်လိုက်ပါ။")}</p><p className="start-shortcuts-help"><kbd>1</kbd> English · <kbd>2</kbd> Slang · <kbd>3</kbd> စကားပုံ <span>{t("You can also move with Tab and select with Enter.", "Tab နဲ့ ရွှေ့ပြီး Enter နဲ့လည်း ရွေးနိုင်ပါတယ်။")}</span></p></div>
+      <div className="challenge-resume-links">{[['slang', t("Myanmar Slang", "မြန်မာ Slang")], ['proverb-choice', 'စကားပုံ · ရွေးဖြေ'], ['proverb-input', 'စကားပုံ · ရိုက်ဖြေ']].filter(([id]) => { const saved = readStored(`assembly-challenge-v1:${id}`); return saved.id && saved.phase !== 'finished' && saved.userId === (session?.user.id || null) }).map(([id, label]) => <button key={id} data-shortcut={String(4 + ['slang', 'proverb-choice', 'proverb-input'].indexOf(id))} onClick={() => newGame(category, difficulty, id === 'slang' ? 'slang' : 'proverb', id === 'proverb-input' ? 'input' : 'choice')}>{label} · ပြန်ဆက်မယ် →</button>)}</div>
       <div className="game-mode-cards" aria-label="Game mode">
         {[
-          ['english', 'A–Z', 'English Words', 'မြန်မာလို clue ဖတ်ပြီး အင်္ဂလိပ်စကားလုံးကို တစ်လုံးချင်း ခန့်မှန်းပါ။'],
-          ['slang', 'က', 'မြန်မာ Slang', 'ပေးထားတဲ့ အဓိပ္ပာယ်ကို ကြည့်ပြီး မြန်မာဗန်းစကားကို ရိုက်ဖြေပါ။'],
-          ['proverb', 'စကားပုံ', 'မြန်မာစကားပုံ', 'စကားပုံရဲ့ အစတစ်ဝက်ကို ကြည့်ပြီး ကျန်တစ်ဝက်ကို ဖြည့်ပါ။'],
-        ].map(([id, , label, description], index) => <button data-shortcut={String(index + 1)} className={`game-mode-card mode-card-${id}`} key={id} onClick={() => { setSetupMode(id); setScreen('setup') }}><span className="mode-card-copy"><strong>{label}</strong><span className="mode-card-description">{description}</span><span className="mode-card-action">ဒီ mode ရွေးမယ် <kbd className="start-shortcut-key">{index + 1}</kbd><span aria-hidden="true">→</span></span></span><GameModeArt mode={id} /></button>)}
+          ['english', 'A–Z', 'English Words', t("Read the Burmese clue and guess the English word one letter at a time.", "မြန်မာလို clue ဖတ်ပြီး အင်္ဂလိပ်စကားလုံးကို တစ်လုံးချင်း ခန့်မှန်းပါ။")],
+          ['slang', 'က', t("Myanmar Slang", "မြန်မာ Slang"), t("Look at the meaning and type the Burmese slang word.", "ပေးထားတဲ့ အဓိပ္ပာယ်ကို ကြည့်ပြီး မြန်မာဗန်းစကားကို ရိုက်ဖြေပါ။")],
+          ['proverb', 'စကားပုံ', t("Burmese proverbs", "မြန်မာစကားပုံ"), t("Read the proverb and fill in the blank.", "စကားပုံရဲ့ အစတစ်ဝက်ကို ကြည့်ပြီး ကွက်လပ်ကို ဖြည့်ပါ။")],
+        ].map(([id, , label, description], index) => <button data-shortcut={String(index + 1)} className={`game-mode-card mode-card-${id}`} key={id} onClick={() => { setSetupMode(id); setScreen('setup') }}><span className="mode-card-copy"><strong>{label}</strong><span className="mode-card-description">{description}</span><span className="mode-card-action">{t("Choose this mode", "ဒီ mode ရွေးမယ်")} <kbd className="start-shortcut-key">{index + 1}</kbd><span aria-hidden="true">→</span></span></span><GameModeArt mode={id} /></button>)}
       </div>
       <footer className="creator-credit">Inspired by <a href="https://github.com/Jeff307-kib/End-Game" target="_blank" rel="noreferrer">Jeff307-kib (Sai Wanna Tun)</a><span>Additional development by Sann Lynn Htun</span><button className="text-button" onClick={() => openPage('about')}>About & Credits</button></footer>
     </section> : screen === 'setup' ? <section className="landing-page setup-page" aria-labelledby="setup-title">
-      <button className="setup-back" onClick={() => setScreen('landing')}>← နောက်သို့ / Back</button>
+      <button className="setup-back" onClick={() => setScreen('landing')}>{t("← Back", "← နောက်သို့")}</button>
       <p className="start-shortcuts-help"><kbd>Enter</kbd> စကစားမယ် · <kbd>Esc</kbd> နောက်သို့</p>
       <form id="game-setup" className="game-setup" onSubmit={event => { event.preventDefault(); changeSettings(setupCategory, setupDifficulty, setupMode, setupPlay); if (setupCategory === category && setupDifficulty === difficulty && setupMode === mode && setupPlay === proverbPlay) newGame(setupCategory, setupDifficulty, setupMode, setupPlay) }}>
-        <h1 id="setup-title" ref={screenTitle} tabIndex={-1}>{setupMode === 'english' ? 'English Words' : setupMode === 'slang' ? 'မြန်မာ Slang' : 'မြန်မာစကားပုံ'} ကစားဖို့ ပြင်ဆင်မယ်</h1>
-        {setupMode === 'english' ? <><label className="category-label" htmlFor="setup-category">အမျိုးအစား</label><select id="setup-category" value={setupCategory} onChange={event => setSetupCategory(event.target.value)}>{categories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><fieldset className="difficulty-picker"><legend>အခက်အခဲအဆင့်</legend><div className="difficulty-options">{difficulties.map(item => <button type="button" key={item.id} aria-pressed={setupDifficulty === item.id} onClick={() => setSetupDifficulty(item.id)}>{item.name}</button>)}</div></fieldset></> : <><p>အမျိုးအစား — {setupMode === 'slang' ? 'မြန်မာဗန်းစကား' : 'မြန်မာစကားပုံ'}။ ဒီ mode မှာ အခက်အခဲအဆင့် ခွဲမထားပါ။</p>{setupMode === 'proverb' && <fieldset className="mode-picker"><legend>ဖြေနည်း</legend><div>{[['choice', 'ရွေးဖြေမယ်'], ['input', 'ရိုက်ဖြေမယ်']].map(([id, label]) => <button type="button" key={id} aria-pressed={setupPlay === id} onClick={() => setSetupPlay(id)}>{label}</button>)}</div></fieldset>}</>}
-        <p>{setupMode === 'english' ? 'မှားခွင့် ၈ ကြိမ်။ Hint အခမဲ့ တစ်ကြိမ်။ အချိန်ကန့်သတ်ချက် မရှိပါ။' : `မေးခွန်း ${setupMode === 'slang' ? slangWords.length : proverbCount} ခုလုံးကို တစ်ပွဲတည်း ကစားမယ်။ ပွဲတစ်ပွဲလုံးအတွက် အသက် ၃ ခု။ မှားဖြေခြင်း သို့မဟုတ် ကျော်ခြင်းတိုင်း အသက် ၁ ခု လျော့ပါမယ်။ အဖြေဖတ်ချိန်နဲ့ Pause အချိန်ကို ဖယ်ပြီး ဖြေချိန်ပဲ ရေတွက်ပါတယ်။ ဒီ browser မှာ ခဏနားပြီး ပြန်ဆက်နိုင်ပါတယ်။`}</p><button className="next-game" type="submit">စကစားမယ် →</button>
+        <h1 id="setup-title" ref={screenTitle} tabIndex={-1}>{setupMode === 'english' ? 'English Words' : setupMode === 'slang' ? t("Myanmar Slang", "မြန်မာ Slang") : t("Burmese proverbs", "မြန်မာစကားပုံ")} {t("· Game setup", "ကစားဖို့ ပြင်ဆင်မယ်")}</h1>
+        {setupMode === 'english' ? <><label className="category-label" htmlFor="setup-category">{t("Category", "အမျိုးအစား")}</label><select id="setup-category" value={setupCategory} onChange={event => setSetupCategory(event.target.value)}>{categories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><fieldset className="difficulty-picker"><legend>{t("Difficulty", "အခက်အခဲအဆင့်")}</legend><div className="difficulty-options">{difficulties.map(item => <button type="button" key={item.id} aria-pressed={setupDifficulty === item.id} onClick={() => setSetupDifficulty(item.id)}>{item.name}</button>)}</div></fieldset></> : <><p>{t("Category", "အမျိုးအစား")} — {setupMode === 'slang' ? 'မြန်မာဗန်းစကား' : t("Burmese proverbs", "မြန်မာစကားပုံ")}{t(". This mode has no difficulty levels.", "။ ဒီ mode မှာ အခက်အခဲအဆင့် ခွဲမထားပါ။")}</p>{setupMode === 'proverb' && <fieldset className="mode-picker"><legend>{t("Answer mode", "ဖြေနည်း")}</legend><div>{[['choice', t('Multiple choice', 'ရွေးဖြေမယ်')], ['input', t('Type the answer', 'ရိုက်ဖြေမယ်')]].map(([id, label]) => <button type="button" key={id} aria-pressed={setupPlay === id} onClick={() => setSetupPlay(id)}>{label}</button>)}</div></fieldset>}</>}
+        <p>{setupMode === 'english' ? t('8 lives. One free hint. No time limit.', 'မှားခွင့် ၈ ကြိမ်။ Hint အခမဲ့ တစ်ကြိမ်။ အချိန်ကန့်သတ်ချက် မရှိပါ။') : t(`Play all ${setupMode === "slang" ? slangWords.length : proverbCount} questions with 3 lives. Each wrong answer or skip costs one life. Only answering time counts; reading and pauses are excluded. Pause and resume later in this browser.`, `မေးခွန်း ${setupMode === 'slang' ? slangWords.length : proverbCount} ခုလုံးကို တစ်ပွဲတည်း ကစားမယ်။ ပွဲတစ်ပွဲလုံးအတွက် အသက် ၃ ခု။ မှားဖြေခြင်း သို့မဟုတ် ကျော်ခြင်းတိုင်း အသက် ၁ ခု လျော့ပါမယ်။ အဖြေဖတ်ချိန်နဲ့ Pause အချိန်ကို ဖယ်ပြီး ဖြေချိန်ပဲ ရေတွက်ပါတယ်။ ဒီ browser မှာ ခဏနားပြီး ပြန်ဆက်နိုင်ပါတယ်။`)}</p><button className="next-game" type="submit">{t("Start playing →", "စကစားမယ် →")}</button>
         {setupMode === 'proverb' && <p className="proverb-credit">{proverbCredit}</p>}
         {setupMode === 'slang' && <SlangCredit />}
       </form>
@@ -334,9 +336,9 @@ export default function AssemblyEndgame() {
       <Lives remaining={remainingLives} total={maxLives} label={`မှားခွင့် ${remainingLives} ကြိမ်ကျန်`} />
       {!isMyanmar && <div className="language-chips">{languages.map((language,index) => <span key={language.name} className={`chip ${index < wrong ? 'lost' : ''}`} style={{'--chip-color':language.backgroundColor}}>{language.name}</span>)}</div>}
       <div className="puzzle-space">
-        {isProverb ? <div className="slang-word-area proverb-prompt" lang="my"><span className="eyebrow">ကျန်တစ်ဝက်ကို ဖြည့်ပါ</span><p className={puzzle.word.length > 80 ? 'long-proverb' : ''}>{puzzle.prefix}<span className="proverb-blank">{over ? ' ' + puzzle.suffix : ' ______'}</span></p>{hintUsed && !over && <small>အစ — {puzzle.hint}…</small>}</div> : isSlang ? <div className="slang-word-area"><span className="eyebrow">မြန်မာဗန်းစကားကို ရိုက်ဖြေပါ</span><p>{over ? puzzle.word : hintUsed ? puzzle.hint + '…' : 'ဘယ်စကားလုံးလဲ?'}</p></div> : <div className="word-area"><span className="eyebrow">{puzzle.word.length} LETTERS</span><div className={'word ' + (puzzle.word.length > 10 ? 'compact' : '')} aria-label="ခန့်မှန်းရမယ့် စကားလုံး">{[...puzzle.word].map((letter,index) => <span key={index} className={guessed.includes(letter) ? 'revealed' : lost ? 'missed' : ''}>{guessed.includes(letter) || lost ? letter.toUpperCase() : <span className="blank-mark"/>}</span>)}</div></div>}
+        {isProverb ? <div className="slang-word-area proverb-prompt" lang="my"><span className="eyebrow">ကွက်လပ်ကို ဖြည့်ပါ</span><p className={puzzle.word.length > 80 ? 'long-proverb' : ''}>{puzzle.prefix}<span className="proverb-blank">{over ? ' ' + puzzle.suffix : ' ______'}</span>{puzzle.trailing ? ' ' + puzzle.trailing : ''}</p>{hintUsed && !over && <small>အစ — {puzzle.hint}…</small>}</div> : isSlang ? <div className="slang-word-area"><span className="eyebrow">မြန်မာဗန်းစကားကို ရိုက်ဖြေပါ</span><p>{over ? puzzle.word : hintUsed ? puzzle.hint + '…' : 'ဘယ်စကားလုံးလဲ?'}</p></div> : <div className="word-area"><span className="eyebrow">{puzzle.word.length} LETTERS</span><div className={'word ' + (puzzle.word.length > 10 ? 'compact' : '')} aria-label="ခန့်မှန်းရမယ့် စကားလုံး">{[...puzzle.word].map((letter,index) => <span key={index} className={guessed.includes(letter) ? 'revealed' : lost ? 'missed' : ''}>{guessed.includes(letter) || lost ? letter.toUpperCase() : <span className="blank-mark"/>}</span>)}</div></div>}
       </div>
-      <div className={'status ' + (won ? 'won' : lost ? 'failed' : '')} data-instruction={!over && isMyanmar && (message === 'ပြထားတဲ့တစ်ဝက်ကို ကြည့်ပြီး ကျန်တစ်ဝက်ကို ဖြည့်ပါ။' || message === 'မြန်မာ keyboard နဲ့ အဖြေအပြည့်ရိုက်ပါ။')} role="status" aria-live="polite">{won ? 'ကယ်တင်နိုင်ပြီ! နောက်တစ်ပွဲ ဆက်ကစားမယ်။' : lost ? `အဖြေ — ${puzzle.word}` : message}</div>
+      <div className={'status ' + (won ? 'won' : lost ? 'failed' : '')} data-instruction={!over && isMyanmar && (message === 'ပြထားတဲ့တစ်ဝက်ကို ကြည့်ပြီး ကွက်လပ်ကို ဖြည့်ပါ။' || message === 'မြန်မာ keyboard နဲ့ အဖြေအပြည့်ရိုက်ပါ။')} role="status" aria-live="polite">{won ? 'ကယ်တင်နိုင်ပြီ! နောက်တစ်ပွဲ ဆက်ကစားမယ်။' : lost ? `အဖြေ — ${puzzle.word}` : message}</div>
       {!over && <div className="hint-panel"><p>{isProverb ? 'တစ်ဝက်ကို hint အဖြစ် ပြထားပါတယ်။' : clueShown ? puzzle.clue : 'ခက်နေပြီလား? Clue ကို အခမဲ့ ကြည့်ပါ။'}</p><div className="hint-actions">{!isProverb && <button disabled={clueShown} onClick={() => setClueShown(true)}>Clue ကြည့်မယ်</button>}<button disabled={hintUsed} onClick={revealLetter}>{hintUsed ? 'Hint သုံးပြီး' : isMyanmar ? 'အစ ဖော်မယ်' : 'Letter ဖော်မယ်'}</button></div></div>}
       {!over && <div className="surrender-action"><button className="text-button surrender-button" onClick={() => setPanel('surrender')}>အဖြေကြည့်ပြီး အရှုံးပေးမယ်</button></div>}
       {!over && (isProverb && proverbPlay === 'choice' ? <div className="proverb-options" aria-label="ကျန်တစ်ဝက် ရွေးပါ">{puzzle.options.map(option => <button key={option} disabled={wrongAnswers.includes(normalizeSlang(option))} className={wrongAnswers.includes(normalizeSlang(option)) ? 'incorrect' : ''} onClick={() => checkAnswer(option)}>{option}</button>)}</div> : isMyanmar ? <form className="slang-form" onSubmit={submitAnswer}><label className="sr-only" htmlFor="slang-answer">သင့်အဖြေ</label><div><input id="slang-answer" ref={answerInput} value={answer} onChange={event => setAnswer(event.target.value)} onCompositionStart={() => { composing.current = true }} onCompositionEnd={() => { composing.current = false }} onKeyDown={event => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current || event.keyCode === 229)) event.preventDefault() }} placeholder={isProverb ? 'ကျန်တစ်ဝက်ကို ရိုက်ပါ…' : 'မြန်မာလို ရိုက်ပါ…'} lang="my" autoComplete="off" spellCheck={false} maxLength={500}/><button className="next-game" type="submit" disabled={!answer.trim()}>စစ်မယ်</button></div></form> : <div className="keyboard" role="group" aria-label="စာလုံးရွေးပါ"><p className="play-controls-help">A–Z · Type a letter or tap a key / စာလုံးကို နှိပ်ပါ</p>{['qwertyuiop','asdfghjkl','zxcvbnm'].map(row => <div className="keyboard-row" key={row}>{[...row].map(letter => <button key={letter} disabled={guessed.includes(letter)} className={guessed.includes(letter) ? puzzle.word.includes(letter) ? 'correct' : 'wrong' : ''} aria-label={`Letter ${letter.toUpperCase()}`} onClick={() => guess(letter)}>{letter.toUpperCase()}</button>)}</div>)}</div>)}

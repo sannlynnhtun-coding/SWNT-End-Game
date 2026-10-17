@@ -1,17 +1,42 @@
 import { useEffect, useState } from 'react'
 import { supabase, onlineError } from '../supabase'
+import { retryDelaySeconds } from '../onlineError'
 
 export default function Account({ session, onPlayerReady, confirmGoogleName = false }) {
   const [guest, setGuest] = useState(true)
   const [signup, setSignup] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [retryUntil, setRetryUntil] = useState(0)
+  const [retrySeconds, setRetrySeconds] = useState(0)
+  useEffect(() => {
+    if (!retryUntil) return
+    function tick() {
+      const remaining = Math.max(0, Math.ceil((retryUntil - Date.now()) / 1000))
+      setRetrySeconds(remaining)
+      if (!remaining) {
+        setRetryUntil(0)
+        setNotice('ပြန်စမ်းနိုင်ပါပြီ။ / You can try again now.')
+      }
+    }
+    const timer = setInterval(tick, 250)
+    window.addEventListener('focus', tick)
+    return () => { clearInterval(timer); window.removeEventListener('focus', tick) }
+  }, [retryUntil])
+  function showError(error) {
+    const seconds = retryDelaySeconds(error)
+    if (seconds) {
+      setRetryUntil(Date.now() + seconds * 1000)
+      setRetrySeconds(seconds)
+      setNotice('')
+    } else setNotice(onlineError(error))
+  }
   const [name, setName] = useState(session?.user.user_metadata?.display_name || session?.user.user_metadata?.full_name || session?.user.user_metadata?.name || '')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   async function submit(event) {
     event.preventDefault()
-    if (busy) return
+    if (busy || Date.now() < retryUntil) return
     setBusy(true); setNotice('')
     try {
       const playerName = name.trim()
@@ -41,7 +66,7 @@ export default function Account({ session, onPlayerReady, confirmGoogleName = fa
           onPlayerReady(result.data.user.id)
         } else setNotice('Email ထဲက အတည်ပြု link ကို နှိပ်ပြီး ဝင်ပါ။')
       }
-    } catch (error) { setNotice(onlineError(error)) }
+    } catch (error) { showError(error) }
     finally { setBusy(false) }
   }
   async function googleLogin() {
@@ -63,11 +88,11 @@ export default function Account({ session, onPlayerReady, confirmGoogleName = fa
     <form onSubmit={submit}>
       {(session || signup || guest) && <label>ကစားသူနာမည်<input value={name} onChange={e => setName(e.target.value)} minLength={2} maxLength={30} required autoComplete="nickname" disabled={busy} /></label>}
       {!session && !guest && <><label>Email<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} disabled={busy} /></label><label>Password<input type="password" minLength={8} required autoComplete={signup ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} disabled={busy} /></label></>}
-      <button className="next-game" disabled={busy}>{busy ? 'ခဏစောင့်ပါ…' : session ? confirmGoogleName ? 'နာမည်နဲ့ စကစားမယ်' : 'နာမည် သိမ်းမယ်' : guest ? 'နာမည်နဲ့ စကစားမယ်' : signup ? 'Account ဖန်တီးမယ်' : 'ဝင်မယ်'}</button>
+      <button className="next-game" disabled={busy || retrySeconds > 0}>{retrySeconds > 0 ? `${retrySeconds}s · ခဏစောင့်ပါ…` : busy ? 'ခဏစောင့်ပါ…' : session ? confirmGoogleName ? 'နာမည်နဲ့ စကစားမယ်' : 'နာမည် သိမ်းမယ်' : guest ? 'နာမည်နဲ့ စကစားမယ်' : signup ? 'Account ဖန်တီးမယ်' : 'ဝင်မယ်'}</button>
     </form>
     {!session && <><button className="text-button" disabled={busy} onClick={() => { setGuest(!guest); setSignup(false); setNotice('') }}>{guest ? 'Email account နဲ့ ဝင်မယ်' : 'နာမည်တစ်ခုပဲ ထည့်ကစားမယ်'}</button>{!guest && <button className="text-button" disabled={busy} onClick={() => { setSignup(!signup); setNotice('') }}>{signup ? 'Account ရှိပြီးသား — ဝင်မယ်' : 'Account အသစ် ဖန်တီးမယ်'}</button>}</>}
     <p className="auth-policy">ဝင်ရောက်ခြင်းဖြင့် <a href="/terms.html" target="_blank" rel="noreferrer">Terms</a> ကို သဘောတူပြီး <a href="/privacy.html" target="_blank" rel="noreferrer">Privacy Policy</a> ကို ဖတ်ရှုနိုင်ပါတယ်။</p>
-    <p role="status">{notice}</p>
+    <p role="status">{retrySeconds > 0 ? `${retrySeconds} စက္ကန့်နောက် ပြန်စမ်းပါ။ / Try again in ${retrySeconds} seconds.` : notice}</p>
   </div>
 }
 

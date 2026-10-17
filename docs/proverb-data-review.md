@@ -1,5 +1,18 @@
 # Proverb data review
 
+## Blank placement audit — 2026-10-17
+
+Checked all 870 source records for complete prompt/answer reconstruction, valid
+answer starts, and repeated space-separated words crossing the blank boundary.
+The reported **သူခိုးက လူ လူ ဟစ်** was the only existing split that exposed half
+of a repeated expression. It now displays **သူခိုးက ______ ဟစ်**, with **လူ လူ**
+as the answer, preserving the source wording. Both input and choice modes use
+this answer. The prompt now asks to fill the blank instead of the remaining half.
+
+Automatic splitting also keeps repeated space-separated words together for future
+entries. These structural checks do not certify every source spelling or every
+phrase boundary as a linguistic review.
+
 Compared the existing dataset with the user-supplied proverb list on 2026-10-16. Corrected the clear transcription errors below; retained existing meanings and stable IDs. The pasted list contains variants and apparent typos of its own, so unmatched wording was not automatically treated as an error. No new meanings were invented.
 
 | Before | After |

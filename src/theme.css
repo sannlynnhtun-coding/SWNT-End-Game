@@ -170,6 +170,24 @@ button[aria-pressed=true] { background: #253b2b; }
 }
 .arcade-shell .game-mode-card[data-shortcut-label] { position: relative; }
 .arcade-shell .game-mode-card[data-shortcut-label]::after { position: absolute; top: 10px; right: 10px; }
+.app-panel .panel-heading button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 44px;
+  min-width: 44px;
+  flex: 0 0 44px;
+  margin: 0;
+  padding: 4px;
+  line-height: 1.2;
+}
+.arcade-shell .app-panel .panel-heading button[data-shortcut-label]::after {
+  flex: none;
+  margin: 0;
+  padding: 1px 3px;
+}
 .arcade-shell :is(button, a):focus-visible { outline: 3px solid var(--mint, #a9ee8c); outline-offset: 3px; }
 @media (hover: none) and (pointer: coarse) {
   .arcade-shell [data-shortcut-label]::after { display: none; }
@@ -177,6 +195,10 @@ button[aria-pressed=true] { background: #253b2b; }
 .topbar [data-shortcut-label]:not(.account-actions button) { position: relative; }
 .arcade-shell .topbar [data-shortcut-label]:not(.account-actions button)::after {
   position: absolute;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  letter-spacing: normal;
   top: calc(100% + 8px);
   right: 0;
   z-index: 20;
@@ -206,3 +228,6 @@ button[aria-pressed=true] { background: #253b2b; }
 .shortcut-list dd { margin: 0; flex-shrink: 0; }
 .shortcut-list kbd { font: 12px/1.6 system-ui, sans-serif; border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; white-space: nowrap; }
 .shortcut-list small { color: var(--muted); }
+.header-locale { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 6px 8px; font-size: 12px; white-space: nowrap; }
+.header-locale .locale-active { color: var(--mint); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 640px) { .header-controls { flex-wrap: wrap; justify-content: flex-end; } .topbar { flex-wrap: wrap; } }

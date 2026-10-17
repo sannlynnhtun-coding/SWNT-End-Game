@@ -24,6 +24,17 @@ export default function useGameAccount() {
     try { localStorage.setItem('assembly-cloud-outbox-v1', JSON.stringify(queue)) } catch { /* Current-session retries still work. */ }
   }, [queue])
   const playerId = session?.user.id
+  const logout = async () => {
+    const previousSession = session
+    setSession(null)
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
+      if (error) throw error
+    } catch (error) {
+      setSession(previousSession)
+      throw error
+    }
+  }
   useEffect(() => {
     const result = queue.find(row => row.userId === playerId)
     if (!result || !playerId) return
@@ -47,5 +58,5 @@ export default function useGameAccount() {
     setCloudMessage('ရလဒ် သိမ်းနေပါတယ်…')
     setQueue(previous => mergeChallengeSnapshot(previous, result))
   }, [])
-  return { session, authReady, saveChallengeResult, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud: () => setRetry(value => value + 1), pendingCloud: queue.some(row => row.userId === playerId) }
+  return { session, authReady, logout, saveChallengeResult, startOnlineRound, saveOnlineResult, cloudMessage, retryCloud: () => setRetry(value => value + 1), pendingCloud: queue.some(row => row.userId === playerId) }
 }

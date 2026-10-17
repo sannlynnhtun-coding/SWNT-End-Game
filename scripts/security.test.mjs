@@ -1,6 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { onlineError } from '../src/onlineError.js'
+import { onlineError, retryDelaySeconds } from '../src/onlineError.js'
+
+test('auth cooldown extracts only a valid retry delay', () => {
+  assert.equal(retryDelaySeconds({ message: 'For security purposes, you can only request this after 2 seconds.' }), 2)
+  assert.equal(retryDelaySeconds({ message: 'Try again in 60 seconds.' }), 60)
+  for (const message of ['request this after -1 seconds', 'request this after 0 seconds', 'request this after Infinity seconds', 'private diagnostic 123', 'request this after 999999999999999999999 seconds']) {
+    assert.equal(retryDelaySeconds({ message }), 0)
+  }
+  assert.equal(retryDelaySeconds(null), 0)
+})
 
 test('unexpected backend diagnostics and arbitrary messages never reach the UI', () => {
   const fallback = onlineError(null)
